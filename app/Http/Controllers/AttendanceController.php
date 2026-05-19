@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Event;
+use App\Models\School;
 use App\Models\Student;
 use App\Services\PrayerService;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +17,8 @@ class AttendanceController extends Controller
     public function prayer(PrayerService $prayerService): Response
     {
         $today = now()->format('Y-m-d');
-        $schoolId = auth()->user()->school_id;
+        $schoolId = auth()->user()->school_id
+            ?? School::query()->where('status', 'active')->value('id');
 
         try {
             $currentPrayer = $prayerService->determinePrayerType(schoolId: $schoolId);
@@ -48,6 +50,7 @@ class AttendanceController extends Controller
             'today_count' => $todayCount,
             'current_prayer' => $currentPrayer,
             'prayer_label' => $currentPrayer ? $prayerService->getPrayerLabel($currentPrayer, $schoolId) : null,
+            'prayer_times' => $prayerService->getPrayerTimes($schoolId),
         ]);
     }
 

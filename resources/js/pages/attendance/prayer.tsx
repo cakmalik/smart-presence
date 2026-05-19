@@ -18,16 +18,26 @@ interface RecentAttendance {
     attended_at: string;
 }
 
+interface PrayerTimes {
+    [key: string]: {
+        label: string;
+        start_time: string;
+        end_time: string;
+    };
+}
+
 export default function AttendancePrayer({
     recent_attendances,
     today_count,
     current_prayer,
     prayer_label,
+    prayer_times = {},
 }: {
     recent_attendances: RecentAttendance[];
     today_count: number;
     current_prayer: string | null;
     prayer_label: string | null;
+    prayer_times: PrayerTimes;
 }) {
     const [scanResult, setScanResult] = useState<{ success: boolean; message: string; data?: { student_name: string; prayer_type: string; attended_at: string } } | null>(null);
     const [isScanning, setIsScanning] = useState(false);
@@ -119,7 +129,8 @@ export default function AttendancePrayer({
                     </p>
                     {!current_prayer && (
                         <p className="mt-1 text-sm text-amber-600">
-                            Saat ini bukan waktu sholat berjamaah. Jadwal: Dzuhur (10:00-14:00), Ashar (14:00-16:00).
+                            Saat ini bukan waktu sholat berjamaah. Jadwal:{' '}
+                            {Object.values(prayer_times).map((pt) => `${pt.label} (${pt.start_time}-${pt.end_time})`).join(', ')}.
                         </p>
                     )}
                 </div>

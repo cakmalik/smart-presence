@@ -60,7 +60,7 @@ export default function PrayerTimes({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put('/settings/prayer-times', { preserveState: true });
+        put('/settings/prayer-times');
     };
 
     const handleSchoolChange = (value: string) => {
