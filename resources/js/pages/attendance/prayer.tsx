@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Scan, CheckCircle, XCircle, Clock, Search, Loader2, UserCheck } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,23 @@ interface StudentResult {
     name: string;
     nis: string | null;
     classroom: string | null;
+}
+
+function getCsrfToken(): string {
+    return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+}
+
+async function apiPost(url: string, data: Record<string, unknown>) {
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify(data),
+    });
 }
 
 export default function AttendancePrayer({
@@ -132,28 +149,26 @@ export default function AttendancePrayer({
         }
     };
 
-    const confirmAttendance = () => {
+    const confirmAttendance = async () => {
         if (!pendingConfirmation) return;
         setIsSubmitting(true);
         setScanResult(null);
 
-        router.post(
-            attendance.prayer.store.url(),
-            { qr_code: pendingConfirmation.qrCode },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setScanResult({ success: true, message: 'Presensi berhasil dicatat' });
-                    setIsSubmitting(false);
-                    setPendingConfirmation(null);
-                },
-                onError: (errors) => {
-                    setScanResult({ success: false, message: (errors as any).qr_code || (errors as any).message || 'Presensi gagal' });
-                    setIsSubmitting(false);
-                    setPendingConfirmation(null);
-                },
+        try {
+            const res = await apiPost(attendance.prayer.store.url(), { qr_code: pendingConfirmation.qrCode });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setScanResult({ success: true, message: data.message, data: data.data ?? undefined });
+            } else {
+                setScanResult({ success: false, message: data.message || 'Presensi gagal' });
             }
-        );
+        } catch {
+            setScanResult({ success: false, message: 'Gagal terhubung ke server.' });
+        } finally {
+            setIsSubmitting(false);
+            setPendingConfirmation(null);
+        }
     };
 
     const cancelConfirmation = () => {
@@ -192,28 +207,27 @@ export default function AttendancePrayer({
         }, 300);
     };
 
-    const submitByStudentId = (studentId: number) => {
+    const submitByStudentId = async (studentId: number) => {
         if (isSubmitting) return;
         setIsSubmitting(true);
         setScanResult(null);
 
-        router.post(
-            attendance.prayer.store.url(),
-            { student_id: studentId },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setScanResult({ success: true, message: 'Presensi berhasil dicatat' });
-                    setIsSubmitting(false);
-                    setSearchQuery('');
-                    setSearchResults([]);
-                },
-                onError: (errors) => {
-                    setScanResult({ success: false, message: (errors as any).student_id || (errors as any).message || 'Presensi gagal' });
-                    setIsSubmitting(false);
-                },
+        try {
+            const res = await apiPost(attendance.prayer.store.url(), { student_id: studentId });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setScanResult({ success: true, message: data.message, data: data.data ?? undefined });
+                setSearchQuery('');
+                setSearchResults([]);
+            } else {
+                setScanResult({ success: false, message: data.message || 'Presensi gagal' });
             }
-        );
+        } catch {
+            setScanResult({ success: false, message: 'Gagal terhubung ke server.' });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const breadcrumbs: BreadcrumbItem[] = [

@@ -28,12 +28,23 @@ class DemoDataSeeder extends Seeder
             ['email' => 'smaaaala@s.s'],
             [
                 'name' => 'admin-smala',
-                'username' => 'smala',
+                'username' => 'admin-smala',
                 'password' => Hash::make('123'),
                 'school_id' => $school->id,
             ]
         );
         $admin->assignRole('admin');
+
+        $op = User::firstOrCreate(
+            ['email' => 'op@smala.id'],
+            [
+                'name' => 'op-smala',
+                'username' => 'op-smala',
+                'password' => Hash::make('123'),
+                'school_id' => $school->id,
+            ]
+        );
+        $op->assignRole('operator');
 
         $classroom = Classroom::firstOrCreate(
             ['school_id' => $school->id, 'name' => 'X-A'],
@@ -53,5 +64,18 @@ class DemoDataSeeder extends Seeder
                 'status' => 'active',
             ]
         );
+
+        Student::updateOrCreate(
+            ['nis' => '6245245'],
+            [
+                'school_id' => $school->id,
+                'classroom_id' => $classroom->id,
+                'nisn' => '1345366',
+                'name' => 'Yunus',
+                'qr_code' => '08f54fd-124e-4dd3-984a-4bf6c770931e',
+                'status' => 'active',
+            ]
+        );
+
     }
 }
