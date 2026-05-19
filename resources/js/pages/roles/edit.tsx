@@ -1,6 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -125,17 +124,10 @@ export default function RolesEdit({
     );
 }
 
-RolesEdit.layout = (page: any) => {
-    const { role } = page.props;
-    return (
-        <AppLayout
-            breadcrumbs={[
-                { title: 'Dashboard', href: '/dashboard' },
-                { title: 'Roles & Permissions', href: roles.index() },
-                { title: role.name, href: roles.edit.url(role.id) },
-            ]}
-        >
-            {page}
-        </AppLayout>
-    );
-};
+RolesEdit.layout = (props: any) => ({
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Roles & Permissions', href: roles.index() },
+        { title: props.role.name, href: roles.edit.url(props.role.id) },
+    ],
+});

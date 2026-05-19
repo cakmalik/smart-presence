@@ -1,6 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -156,17 +155,10 @@ export default function SchoolsEdit({ school }: { school: School }) {
     );
 }
 
-SchoolsEdit.layout = (page: any) => {
-    const { school } = page.props;
-    return (
-        <AppLayout
-            breadcrumbs={[
-                { title: 'Dashboard', href: '/dashboard' },
-                { title: 'Sekolah', href: schools.index() },
-                { title: school.name, href: schools.edit.url(school.id) },
-            ]}
-        >
-            {page}
-        </AppLayout>
-    );
-};
+SchoolsEdit.layout = (props: any) => ({
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Sekolah', href: schools.index() },
+        { title: props.school.name, href: schools.edit.url(props.school.id) },
+    ],
+});

@@ -1,6 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -184,17 +183,10 @@ export default function UsersEdit({
     );
 }
 
-UsersEdit.layout = (page: any) => {
-    const { user } = page.props;
-    return (
-        <AppLayout
-            breadcrumbs={[
-                { title: 'Dashboard', href: '/dashboard' },
-                { title: 'Pengguna', href: users.index() },
-                { title: user.name, href: users.edit.url(user.id) },
-            ]}
-        >
-            {page}
-        </AppLayout>
-    );
-};
+UsersEdit.layout = (props: any) => ({
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Pengguna', href: users.index() },
+        { title: props.user.name, href: users.edit.url(props.user.id) },
+    ],
+});
