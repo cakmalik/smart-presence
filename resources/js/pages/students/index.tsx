@@ -88,7 +88,7 @@ export default function StudentsIndex({
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Manajemen Siswa" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
@@ -210,6 +210,13 @@ export default function StudentsIndex({
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+StudentsIndex.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Siswa', href: students.index() },
+    ],
+};

@@ -70,7 +70,7 @@ export default function ReportsDhuhur({
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Laporan Presensi Dhuhur" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
@@ -181,6 +181,14 @@ export default function ReportsDhuhur({
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+ReportsDhuhur.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Laporan', href: '/reports' },
+        { title: 'Presensi Dhuhur', href: reports.dhuhur() },
+    ],
+};

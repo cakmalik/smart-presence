@@ -46,7 +46,7 @@ export default function ClassroomsEdit({ classroom, teachers }: { classroom: Cla
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Edit Kelas" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center gap-4">
@@ -105,6 +105,21 @@ export default function ClassroomsEdit({ classroom, teachers }: { classroom: Cla
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+ClassroomsEdit.layout = (page: any) => {
+    const { classroom } = page.props;
+    return (
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Dashboard', href: '/dashboard' },
+                { title: 'Kelas', href: classrooms.index() },
+                { title: classroom.name, href: classrooms.edit.url(classroom.id) },
+            ]}
+        >
+            {page}
+        </AppLayout>
+    );
+};

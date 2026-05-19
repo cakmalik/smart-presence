@@ -39,7 +39,7 @@ export default function EventsCreate() {
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Tambah Event" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center gap-4">
@@ -119,6 +119,14 @@ export default function EventsCreate() {
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+EventsCreate.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Event', href: events.index() },
+        { title: 'Tambah', href: events.create() },
+    ],
+};

@@ -45,7 +45,7 @@ export default function ReportsEvent({ events: eventsData }: { events: Paginated
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Laporan Presensi Event" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div>
@@ -114,6 +114,14 @@ export default function ReportsEvent({ events: eventsData }: { events: Paginated
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+ReportsEvent.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Laporan', href: '/reports' },
+        { title: 'Presensi Event', href: reports.event() },
+    ],
+};

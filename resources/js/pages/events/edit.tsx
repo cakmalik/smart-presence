@@ -51,7 +51,7 @@ export default function EventsEdit({ event }: { event: Event }) {
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Edit Event" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center gap-4">
@@ -130,6 +130,21 @@ export default function EventsEdit({ event }: { event: Event }) {
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+EventsEdit.layout = (page: any) => {
+    const { event } = page.props;
+    return (
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Dashboard', href: '/dashboard' },
+                { title: 'Event', href: events.index() },
+                { title: event.name, href: events.edit.url(event.id) },
+            ]}
+        >
+            {page}
+        </AppLayout>
+    );
+};

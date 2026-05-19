@@ -45,7 +45,7 @@ export default function ClassroomsIndex({ classrooms: classroomsData }: { classr
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Manajemen Kelas" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
@@ -125,6 +125,13 @@ export default function ClassroomsIndex({ classrooms: classroomsData }: { classr
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+ClassroomsIndex.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Kelas', href: classrooms.index() },
+    ],
+};

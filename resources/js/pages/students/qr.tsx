@@ -25,7 +25,7 @@ export default function StudentQr({ student, qr_code, qr_image }: { student: Stu
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title={`QR Code - ${student.name}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center gap-4">
@@ -67,6 +67,21 @@ export default function StudentQr({ student, qr_code, qr_image }: { student: Stu
                     </Card>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+StudentQr.layout = (page: any) => {
+    const { student } = page.props;
+    return (
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Dashboard', href: '/dashboard' },
+                { title: 'Siswa', href: students.index() },
+                { title: student.name, href: students.qr.url(student.id) },
+            ]}
+        >
+            {page}
+        </AppLayout>
+    );
+};

@@ -43,7 +43,7 @@ export default function SchoolsCreate() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Tambah Sekolah" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center gap-4">
@@ -151,6 +151,10 @@ export default function SchoolsCreate() {
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+SchoolsCreate.layout = {
+    breadcrumbs,
+};

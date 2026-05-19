@@ -57,7 +57,7 @@ export default function EventsIndex({ events: eventsData }: { events: PaginatedD
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Manajemen Event" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
@@ -141,6 +141,13 @@ export default function EventsIndex({ events: eventsData }: { events: PaginatedD
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+EventsIndex.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Event', href: events.index() },
+    ],
+};

@@ -39,7 +39,7 @@ export default function ClassroomsCreate({ teachers }: { teachers: Teacher[] }) 
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Tambah Kelas" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center gap-4">
@@ -99,6 +99,14 @@ export default function ClassroomsCreate({ teachers }: { teachers: Teacher[] }) 
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+ClassroomsCreate.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Kelas', href: classrooms.index() },
+        { title: 'Tambah', href: classrooms.create() },
+    ],
+};

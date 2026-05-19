@@ -100,7 +100,7 @@ export default function AttendanceEvent({ events }: { events: Event[] }) {
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Presensi Event" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div>
@@ -201,6 +201,13 @@ export default function AttendanceEvent({ events }: { events: Event[] }) {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+AttendanceEvent.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Presensi Event', href: attendance.event() },
+    ],
+};
