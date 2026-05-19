@@ -1,9 +1,9 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Scan, CheckCircle, XCircle, Clock, Search, Loader2, UserCheck } from 'lucide-react';
+import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -71,7 +71,6 @@ export default function AttendancePrayer({
     prayer_label: string | null;
     prayer_times: PrayerTimes;
 }) {
-    const [scanResult, setScanResult] = useState<{ success: boolean; message: string; data?: { student_name: string; prayer_type: string; attended_at: string } } | null>(null);
     const [isScanning, setIsScanning] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -152,19 +151,23 @@ export default function AttendancePrayer({
     const confirmAttendance = async () => {
         if (!pendingConfirmation) return;
         setIsSubmitting(true);
-        setScanResult(null);
 
         try {
             const res = await apiPost(attendance.prayer.store.url(), { qr_code: pendingConfirmation.qrCode });
             const data = await res.json();
 
             if (res.ok && data.success) {
-                setScanResult({ success: true, message: data.message, data: data.data ?? undefined });
+                toast.success(data.message, {
+                    description: data.data
+                        ? `${data.data.student_name} · ${data.data.prayer_type} · ${data.data.attended_at}`
+                        : undefined,
+                });
+                setTimeout(() => router.reload(), 1500);
             } else {
-                setScanResult({ success: false, message: data.message || 'Presensi gagal' });
+                toast.error(data.message || 'Presensi gagal');
             }
         } catch {
-            setScanResult({ success: false, message: 'Gagal terhubung ke server.' });
+            toast.error('Gagal terhubung ke server.');
         } finally {
             setIsSubmitting(false);
             setPendingConfirmation(null);
@@ -210,21 +213,25 @@ export default function AttendancePrayer({
     const submitByStudentId = async (studentId: number) => {
         if (isSubmitting) return;
         setIsSubmitting(true);
-        setScanResult(null);
 
         try {
             const res = await apiPost(attendance.prayer.store.url(), { student_id: studentId });
             const data = await res.json();
 
             if (res.ok && data.success) {
-                setScanResult({ success: true, message: data.message, data: data.data ?? undefined });
+                toast.success(data.message, {
+                    description: data.data
+                        ? `${data.data.student_name} · ${data.data.prayer_type} · ${data.data.attended_at}`
+                        : undefined,
+                });
                 setSearchQuery('');
                 setSearchResults([]);
+                setTimeout(() => router.reload(), 1500);
             } else {
-                setScanResult({ success: false, message: data.message || 'Presensi gagal' });
+                toast.error(data.message || 'Presensi gagal');
             }
         } catch {
-            setScanResult({ success: false, message: 'Gagal terhubung ke server.' });
+            toast.error('Gagal terhubung ke server.');
         } finally {
             setIsSubmitting(false);
         }
@@ -364,33 +371,6 @@ export default function AttendancePrayer({
                                 </div>
                             </CardContent>
                         </Card>
-
-                        {scanResult && (
-                            <Card className={scanResult.success ? 'border-green-500' : 'border-red-500'}>
-                                <CardContent className="pt-6">
-                                    <div className="flex items-center gap-2">
-                                        {scanResult.success ? (
-                                            <CheckCircle className="h-5 w-5 text-green-500" />
-                                        ) : (
-                                            <XCircle className="h-5 w-5 text-red-500" />
-                                        )}
-                                        <div>
-                                            <p className={scanResult.success ? 'text-green-700' : 'text-red-700'}>
-                                                {scanResult.message}
-                                            </p>
-                                            {scanResult.data && (
-                                                <p className="text-sm">
-                                                    {scanResult.data.student_name}
-                                                    {scanResult.data.prayer_type && ` - ${scanResult.data.prayer_type}`}
-                                                    {' - '}
-                                                    {scanResult.data.attended_at}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
 
                         <Card>
                             <CardHeader>
