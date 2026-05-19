@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('students', StudentController::class)->except(['show']);
         Route::post('students/import', [StudentController::class, 'import'])->name('students.import');
         Route::get('students/{student}/qr', [StudentController::class, 'qr'])->name('students.qr');
+        Route::get('students/{student}/qr-data', [StudentController::class, 'qrData'])->name('students.qr.data');
     });
 
     Route::middleware(['can:manage events'])->group(function () {
@@ -45,15 +46,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['can:scan attendance'])->group(function () {
         Route::get('attendance/scan/{qr_code}', function ($qrCode) {
-            $student = Student::query()->where('qr_code', $qrCode)->first();
+            $student = Student::query()
+                ->where('qr_code', $qrCode)
+                ->with('classroom:id,name')
+                ->first();
 
             return response()->json([
                 'found' => (bool) $student,
-                'student' => $student ? ['id' => $student->id, 'name' => $student->name, 'nis' => $student->nis] : null,
+                'student' => $student ? [
+                    'id' => $student->id,
+                    'name' => $student->name,
+                    'nis' => $student->nis,
+                    'classroom' => $student->classroom?->name,
+                ] : null,
             ]);
         })->name('attendance.scan');
         Route::get('attendance/prayer', [AttendanceController::class, 'prayer'])->name('attendance.prayer');
         Route::post('attendance/prayer', [AttendanceController::class, 'storePrayer'])->name('attendance.prayer.store');
+        Route::get('attendance/prayer/students/search', [AttendanceController::class, 'searchStudents'])->name('attendance.prayer.search');
         Route::get('attendance/event', [AttendanceController::class, 'event'])->name('attendance.event');
         Route::post('attendance/event', [AttendanceController::class, 'storeEvent'])->name('attendance.event.store');
     });

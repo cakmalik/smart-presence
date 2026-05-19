@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, QrCode, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, QrCode, Upload, Download, Printer, Loader2, X } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,12 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -20,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import students from '@/routes/students';
 import type { BreadcrumbItem } from '@/types';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 interface Classroom {
     id: number;
@@ -58,6 +64,84 @@ export default function StudentsIndex({
     filters: { search?: string; classroom_id?: string };
 }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [qrModal, setQrModal] = useState<{
+        open: boolean;
+        loading: boolean;
+        student: { id: number; name: string; nis: string | null; classroom: string | null } | null;
+        qrImage: string | null;
+        qrCode: string | null;
+    }>({
+        open: false,
+        loading: false,
+        student: null,
+        qrImage: null,
+        qrCode: null,
+    });
+
+    const handleOpenQr = async (studentId: number) => {
+        setQrModal({ open: true, loading: true, student: null, qrImage: null, qrCode: null });
+
+        try {
+            const res = await fetch(students.qr.data.url(studentId));
+            const data = await res.json();
+
+            setQrModal({
+                open: true,
+                loading: false,
+                student: data.student,
+                qrImage: data.qr_image,
+                qrCode: data.qr_code,
+            });
+        } catch {
+            setQrModal((prev) => ({ ...prev, open: false, loading: false }));
+        }
+    };
+
+    const handleCloseQr = () => {
+        setQrModal({ open: false, loading: false, student: null, qrImage: null, qrCode: null });
+    };
+
+    const handlePrintQr = () => {
+        if (!qrModal.student || !qrModal.qrImage) return;
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) return;
+
+        const s = qrModal.student;
+        printWindow.document.write(`
+            <html>
+                <head><title>QR Code - ${s.name}</title>
+                <style>
+                    body { display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; font-family:sans-serif; }
+                    .card { text-align:center; padding:20px; }
+                    h2 { margin-bottom:4px; }
+                    p { color:#666; margin:4px 0; }
+                    img { width:256px; height:256px; margin:16px 0; image-rendering:pixelated; }
+                    .code { font-size:11px; color:#999; word-break:break-all; }
+                </style>
+                </head>
+                <body>
+                    <div class="card">
+                        <h2>${s.name}</h2>
+                        <p>NIS: ${s.nis || '-'}</p>
+                        <p>Kelas: ${s.classroom || '-'}</p>
+                        <img src="${qrModal.qrImage}" alt="QR Code" />
+                        <p class="code">Kode: ${qrModal.qrCode}</p>
+                    </div>
+                    <script>window.onload=function(){window.print();}<\/script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+    };
+
+    const handleDownloadQr = () => {
+        if (!qrModal.qrImage || !qrModal.student) return;
+        const link = document.createElement('a');
+        link.href = qrModal.qrImage;
+        link.download = `QR-${qrModal.student.name}.png`;
+        link.click();
+    };
 
     const { setData: setImportData, post: postImport, processing: importProcessing } = useForm({
         file: null as File | null,
@@ -169,10 +253,8 @@ export default function StudentsIndex({
                                             </td>
                                             <td className="px-4 py-2">
                                                 <div className="flex gap-2">
-                                                    <Button variant="ghost" size="sm" asChild>
-                                                        <Link href={students.qr.url(student.id)}>
-                                                            <QrCode className="h-4 w-4" />
-                                                        </Link>
+                                                    <Button variant="ghost" size="sm" onClick={() => handleOpenQr(student.id)}>
+                                                        <QrCode className="h-4 w-4" />
                                                     </Button>
                                                     <Button variant="ghost" size="sm" asChild>
                                                         <Link href={students.edit.url(student.id)}>
@@ -209,6 +291,43 @@ export default function StudentsIndex({
                         </div>
                     </CardContent>
                 </Card>
+
+                <Dialog open={qrModal.open} onOpenChange={(open) => { if (!open) handleCloseQr(); }}>
+                    <DialogContent className="sm:max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle>QR Code Siswa</DialogTitle>
+                        </DialogHeader>
+                        {qrModal.loading ? (
+                            <div className="flex justify-center py-8">
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : qrModal.student && qrModal.qrImage ? (
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="text-center">
+                                    <p className="text-lg font-bold">{qrModal.student.name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        NIS: {qrModal.student.nis || '-'}
+                                        {qrModal.student.classroom && ` | Kelas: ${qrModal.student.classroom}`}
+                                    </p>
+                                </div>
+                                <div className="rounded-lg border p-4">
+                                    <img src={qrModal.qrImage} alt="QR Code" className="h-48 w-48" />
+                                </div>
+                                <p className="text-xs text-muted-foreground break-all text-center">
+                                    Kode: {qrModal.qrCode}
+                                </p>
+                                <div className="flex gap-2">
+                                    <Button variant="outline" onClick={handlePrintQr}>
+                                        <Printer className="mr-2 h-4 w-4" /> Cetak
+                                    </Button>
+                                    <Button variant="outline" onClick={handleDownloadQr}>
+                                        <Download className="mr-2 h-4 w-4" /> Download
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : null}
+                    </DialogContent>
+                </Dialog>
             </div>
         </>
     );

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Classroom;
 use App\Models\Student;
 use App\Services\QrCodeService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -130,6 +131,23 @@ class StudentController extends Controller
             ],
             'qr_code' => $student->qr_code,
             'qr_image' => $qrImage,
+        ]);
+    }
+
+    public function qrData(Student $student): JsonResponse
+    {
+        $qrData = route('attendance.scan', $student->qr_code);
+        $qrImage = $this->qrCodeService->generatePng($qrData);
+
+        return response()->json([
+            'qr_image' => $qrImage,
+            'student' => [
+                'id' => $student->id,
+                'nis' => $student->nis,
+                'name' => $student->name,
+                'classroom' => $student->classroom?->name,
+            ],
+            'qr_code' => $student->qr_code,
         ]);
     }
 

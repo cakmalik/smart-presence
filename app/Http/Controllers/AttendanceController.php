@@ -57,19 +57,31 @@ class AttendanceController extends Controller
     public function storePrayer(Request $request, PrayerService $prayerService): JsonResponse
     {
         $validated = $request->validate([
-            'qr_code' => ['required', 'string'],
+            'qr_code' => ['required_without:student_id', 'string'],
+            'student_id' => ['required_without:qr_code', 'integer', 'exists:students,id'],
         ]);
 
-        $student = Student::query()
-            ->where('qr_code', $validated['qr_code'])
-            ->where('status', 'active')
-            ->first();
+        if (! empty($validated['student_id'])) {
+            $student = Student::query()->findOrFail($validated['student_id']);
 
-        if (! $student) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Siswa tidak ditemukan atau tidak aktif.',
-            ], 404);
+            if ($student->status !== 'active') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Siswa tidak aktif.',
+                ], 404);
+            }
+        } else {
+            $student = Student::query()
+                ->where('qr_code', $validated['qr_code'])
+                ->where('status', 'active')
+                ->first();
+
+            if (! $student) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Siswa tidak ditemukan atau tidak aktif.',
+                ], 404);
+            }
         }
 
         try {
@@ -114,6 +126,31 @@ class AttendanceController extends Controller
                 'prayer_type' => $prayerLabel,
                 'attended_at' => $attendance->attended_at->format('H:i'),
             ],
+        ]);
+    }
+
+    public function searchStudents(Request $request): JsonResponse
+    {
+        $request->validate([
+            'q' => ['required', 'string', 'min:1', 'max:255'],
+        ]);
+
+        $students = Student::query()
+            ->with('classroom:id,name')
+            ->where('status', 'active')
+            ->where('name', 'like', "%{$request->q}%")
+            ->orderBy('name')
+            ->take(20)
+            ->get()
+            ->map(fn (Student $student) => [
+                'id' => $student->id,
+                'name' => $student->name,
+                'nis' => $student->nis,
+                'classroom' => $student->classroom?->name,
+            ]);
+
+        return response()->json([
+            'data' => $students,
         ]);
     }
 

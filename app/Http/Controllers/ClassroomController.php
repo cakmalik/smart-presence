@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classroom;
+use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-
-use App\Models\School;
 
 class ClassroomController extends Controller
 {
