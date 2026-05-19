@@ -129,7 +129,11 @@ export default function AttendancePrayer({
         setLookupError(null);
 
         try {
-            const res = await fetch(attendance.scan.url(decodedText));
+            const qrValue = decodedText.includes('/')
+                ? decodedText.substring(decodedText.lastIndexOf('/') + 1)
+                : decodedText;
+
+            const res = await fetch(attendance.scan.url(qrValue));
             const data = await res.json();
 
             if (!data.found || !data.student) {
@@ -138,7 +142,7 @@ export default function AttendancePrayer({
             }
 
             setPendingConfirmation({
-                qrCode: decodedText,
+                qrCode: qrValue,
                 student: data.student,
             });
         } catch {
