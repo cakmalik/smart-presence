@@ -16,9 +16,10 @@ class AttendanceController extends Controller
     public function prayer(PrayerService $prayerService): Response
     {
         $today = now()->format('Y-m-d');
+        $schoolId = auth()->user()->school_id;
 
         try {
-            $currentPrayer = $prayerService->determinePrayerType();
+            $currentPrayer = $prayerService->determinePrayerType(schoolId: $schoolId);
         } catch (\InvalidArgumentException) {
             $currentPrayer = null;
         }
@@ -32,7 +33,7 @@ class AttendanceController extends Controller
             ->get()
             ->map(fn (Attendance $attendance) => [
                 'student_name' => $attendance->student->name,
-                'prayer_type' => $prayerService->getPrayerLabel($attendance->attendance_type),
+                'prayer_type' => $prayerService->getPrayerLabel($attendance->attendance_type, $schoolId),
                 'operator_name' => $attendance->operator->name,
                 'attended_at' => $attendance->attended_at->format('H:i'),
             ]);
@@ -46,7 +47,7 @@ class AttendanceController extends Controller
             'recent_attendances' => $recentAttendances,
             'today_count' => $todayCount,
             'current_prayer' => $currentPrayer,
-            'prayer_label' => $currentPrayer ? $prayerService->getPrayerLabel($currentPrayer) : null,
+            'prayer_label' => $currentPrayer ? $prayerService->getPrayerLabel($currentPrayer, $schoolId) : null,
         ]);
     }
 
@@ -69,7 +70,7 @@ class AttendanceController extends Controller
         }
 
         try {
-            $prayerType = $prayerService->determinePrayerType();
+            $prayerType = $prayerService->determinePrayerType(schoolId: $student->school_id);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
@@ -78,7 +79,7 @@ class AttendanceController extends Controller
         }
 
         $today = now()->format('Y-m-d');
-        $prayerLabel = $prayerService->getPrayerLabel($prayerType);
+        $prayerLabel = $prayerService->getPrayerLabel($prayerType, $student->school_id);
 
         $existing = Attendance::query()
             ->where('student_id', $student->id)

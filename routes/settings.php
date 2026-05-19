@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\PrayerTimeController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -24,4 +25,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+
+    Route::middleware(['can:manage schools'])->group(function () {
+        Route::get('settings/prayer-times', [PrayerTimeController::class, 'index'])->name('prayer-times.index');
+        Route::put('settings/prayer-times', [PrayerTimeController::class, 'update'])->name('prayer-times.update');
+    });
 });

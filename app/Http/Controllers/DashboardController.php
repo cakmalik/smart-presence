@@ -14,6 +14,7 @@ class DashboardController extends Controller
 {
     public function index(PrayerService $prayerService): Response
     {
+        $schoolId = auth()->user()->school_id;
         $prayerTypes = $prayerService->getAllPrayerTypes();
         $stats = [];
 
@@ -30,8 +31,6 @@ class DashboardController extends Controller
                 'active_events' => 0,
             ];
         } else {
-            $schoolId = auth()->user()->school_id;
-
             $stats = [
                 'total_students' => Student::query()->where('school_id', $schoolId)->count(),
                 'total_classrooms' => 0,

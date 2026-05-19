@@ -15,6 +15,7 @@ class ReportController extends Controller
 {
     public function prayer(Request $request, PrayerService $prayerService): Response
     {
+        $schoolId = auth()->user()->school_id;
         $prayerTypes = $prayerService->getAllPrayerTypes();
 
         $attendances = Attendance::query()
@@ -29,7 +30,7 @@ class ReportController extends Controller
             ->through(fn (Attendance $attendance) => [
                 'student_name' => $attendance->student->name,
                 'classroom_name' => $attendance->student->classroom?->name,
-                'prayer_type' => $prayerService->getPrayerLabel($attendance->attendance_type),
+                'prayer_type' => $prayerService->getPrayerLabel($attendance->attendance_type, $schoolId),
                 'operator_name' => $attendance->operator->name,
                 'attendance_date' => $attendance->attendance_date->format('d M Y'),
                 'attended_at' => $attendance->attended_at->format('H:i'),
@@ -41,7 +42,7 @@ class ReportController extends Controller
             'attendances' => $attendances,
             'classrooms' => $classrooms,
             'filters' => $request->only(['date_from', 'date_to', 'classroom_id', 'prayer_type']),
-            'prayer_types' => collect($prayerTypes)->mapWithKeys(fn ($t) => [$t => $prayerService->getPrayerLabel($t)]),
+            'prayer_types' => collect($prayerTypes)->mapWithKeys(fn ($t) => [$t => $prayerService->getPrayerLabel($t, $schoolId)]),
         ]);
     }
 
@@ -67,6 +68,7 @@ class ReportController extends Controller
 
     public function exportPrayer(Request $request, PrayerService $prayerService): StreamedResponse
     {
+        $schoolId = auth()->user()->school_id;
         $prayerTypes = $prayerService->getAllPrayerTypes();
 
         $attendances = Attendance::query()
@@ -86,7 +88,7 @@ class ReportController extends Controller
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
-        $callback = function () use ($attendances, $prayerService) {
+        $callback = function () use ($attendances, $prayerService, $schoolId) {
             $file = fopen('php://output', 'w');
             fputcsv($file, ['Tanggal', 'Waktu', 'Jenis Sholat', 'NIS', 'Nama Siswa', 'Kelas', 'Operator']);
 
@@ -94,7 +96,7 @@ class ReportController extends Controller
                 fputcsv($file, [
                     $attendance->attendance_date->format('d M Y'),
                     $attendance->attended_at->format('H:i'),
-                    $prayerService->getPrayerLabel($attendance->attendance_type),
+                    $prayerService->getPrayerLabel($attendance->attendance_type, $schoolId),
                     $attendance->student->nis ?? '-',
                     $attendance->student->name,
                     $attendance->student->classroom?->name ?? '-',
