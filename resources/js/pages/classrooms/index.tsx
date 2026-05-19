@@ -18,6 +18,7 @@ interface Classroom {
     name: string;
     grade: string | null;
     teacher_name: string | null;
+    school_name?: string | null;
     students_count: number;
     created_at: string;
 }
@@ -32,7 +33,7 @@ interface PaginatedData {
     next_page_url: string | null;
 }
 
-export default function ClassroomsIndex({ classrooms: classroomsData }: { classrooms: PaginatedData }) {
+export default function ClassroomsIndex({ classrooms: classroomsData, isSuperadmin }: { classrooms: PaginatedData; isSuperadmin: boolean }) {
     const handleDelete = (id: number) => {
         if (confirm('Apakah Anda yakin ingin menghapus kelas ini?')) {
             router.delete(classrooms.destroy.url(id));
@@ -71,6 +72,7 @@ export default function ClassroomsIndex({ classrooms: classroomsData }: { classr
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b">
+                                        {isSuperadmin && <th className="px-4 py-2 text-left font-medium">Sekolah</th>}
                                         <th className="px-4 py-2 text-left font-medium">Nama Kelas</th>
                                         <th className="px-4 py-2 text-left font-medium">Tingkat</th>
                                         <th className="px-4 py-2 text-left font-medium">Wali Kelas</th>
@@ -81,6 +83,7 @@ export default function ClassroomsIndex({ classrooms: classroomsData }: { classr
                                 <tbody>
                                     {classroomsData.data.map((classroom) => (
                                         <tr key={classroom.id} className="border-b">
+                                            {isSuperadmin && <td className="px-4 py-2">{classroom.school_name || '-'}</td>}
                                             <td className="px-4 py-2 font-medium">{classroom.name}</td>
                                             <td className="px-4 py-2">{classroom.grade || '-'}</td>
                                             <td className="px-4 py-2">{classroom.teacher_name || '-'}</td>

@@ -26,13 +26,20 @@ interface Classroom {
     name: string;
     grade: string | null;
     teacher_id: number | null;
+    school_id: number;
 }
 
-export default function ClassroomsEdit({ classroom, teachers }: { classroom: Classroom; teachers: Teacher[] }) {
+interface School {
+    id: number;
+    name: string;
+}
+
+export default function ClassroomsEdit({ classroom, teachers, schools }: { classroom: Classroom; teachers: Teacher[]; schools: School[] }) {
     const { data, setData, put, processing, errors, transform } = useForm({
         name: classroom.name,
         grade: classroom.grade || '',
         teacher_id: classroom.teacher_id ? String(classroom.teacher_id) : 'none',
+        school_id: classroom.school_id ? String(classroom.school_id) : '',
     });
 
     useEffect(() => {
@@ -74,6 +81,25 @@ export default function ClassroomsEdit({ classroom, teachers }: { classroom: Cla
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {schools && schools.length > 0 && (
+                                <div>
+                                    <Label htmlFor="school_id">Sekolah</Label>
+                                    <Select value={data.school_id} onValueChange={(value) => setData('school_id', value)}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Pilih sekolah" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {schools.map((s) => (
+                                                <SelectItem key={s.id} value={String(s.id)}>
+                                                    {s.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.school_id && <p className="mt-1 text-sm text-red-500">{errors.school_id}</p>}
+                                </div>
+                            )}
+
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
                                     <Label htmlFor="name">Nama Kelas</Label>

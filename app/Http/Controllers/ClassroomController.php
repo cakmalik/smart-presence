@@ -9,13 +9,15 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+use App\Models\School;
+
 class ClassroomController extends Controller
 {
     public function index(): Response
     {
         $classrooms = Classroom::query()
             ->withCount('students')
-            ->with('teacher:id,name')
+            ->with(['teacher:id,name', 'school:id,name'])
             ->latest()
             ->paginate(10)
             ->through(fn (Classroom $classroom) => [
@@ -23,34 +25,53 @@ class ClassroomController extends Controller
                 'name' => $classroom->name,
                 'grade' => $classroom->grade,
                 'teacher_name' => $classroom->teacher?->name,
+                'school_name' => $classroom->school?->name,
                 'students_count' => $classroom->students_count,
                 'created_at' => $classroom->created_at->format('d M Y'),
             ]);
 
         return Inertia::render('classrooms/index', [
             'classrooms' => $classrooms,
+            'isSuperadmin' => auth()->user()->isSuperadmin(),
         ]);
     }
 
     public function create(): Response
     {
+        $user = auth()->user();
+
         $teachers = User::query()
             ->role(['admin', 'operator'])
-            ->when(auth()->user()->school_id, fn ($q) => $q->where('school_id', auth()->user()->school_id))
+            ->when($user->school_id, fn ($q) => $q->where('school_id', $user->school_id))
             ->get(['id', 'name']);
+
+        $schools = $user->isSuperadmin()
+            ? School::query()->where('status', 'active')->orderBy('name')->get(['id', 'name'])
+            : collect();
 
         return Inertia::render('classrooms/create', [
             'teachers' => $teachers,
+            'schools' => $schools,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'grade' => ['nullable', 'string', 'max:50'],
             'teacher_id' => ['nullable', 'exists:users,id'],
-        ]);
+        ];
+
+        if (auth()->user()->isSuperadmin()) {
+            $rules['school_id'] = ['required', 'exists:schools,id'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if (! auth()->user()->isSuperadmin()) {
+            $validated['school_id'] = auth()->user()->school_id;
+        }
 
         Classroom::create($validated);
 
@@ -59,10 +80,16 @@ class ClassroomController extends Controller
 
     public function edit(Classroom $classroom): Response
     {
+        $user = auth()->user();
+
         $teachers = User::query()
             ->role(['admin', 'operator'])
-            ->when(auth()->user()->school_id, fn ($q) => $q->where('school_id', auth()->user()->school_id))
+            ->when($user->school_id, fn ($q) => $q->where('school_id', $user->school_id))
             ->get(['id', 'name']);
+
+        $schools = $user->isSuperadmin()
+            ? School::query()->where('status', 'active')->orderBy('name')->get(['id', 'name'])
+            : collect();
 
         return Inertia::render('classrooms/edit', [
             'classroom' => [
@@ -70,18 +97,30 @@ class ClassroomController extends Controller
                 'name' => $classroom->name,
                 'grade' => $classroom->grade,
                 'teacher_id' => $classroom->teacher_id,
+                'school_id' => $classroom->school_id,
             ],
             'teachers' => $teachers,
+            'schools' => $schools,
         ]);
     }
 
     public function update(Request $request, Classroom $classroom): RedirectResponse
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'grade' => ['nullable', 'string', 'max:50'],
             'teacher_id' => ['nullable', 'exists:users,id'],
-        ]);
+        ];
+
+        if (auth()->user()->isSuperadmin()) {
+            $rules['school_id'] = ['required', 'exists:schools,id'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if (! auth()->user()->isSuperadmin()) {
+            $validated['school_id'] = auth()->user()->school_id;
+        }
 
         $classroom->update($validated);
 
