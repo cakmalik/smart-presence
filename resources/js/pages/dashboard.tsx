@@ -17,7 +17,7 @@ interface DashboardProps {
         total_students?: number;
         total_classrooms?: number;
         total_events?: number;
-        today_dhuhur?: number;
+        today_prayer?: number;
         active_events?: number;
     };
 }
@@ -50,13 +50,13 @@ export default function Dashboard({ stats }: DashboardProps) {
 
     if (permissions.includes('scan attendance')) {
         quickLinks.push(
-            { title: 'Presensi Dhuhur', href: attendance.dhuhur(), icon: ScanLine },
+            { title: 'Presensi Sholat Berjamaah', href: attendance.prayer(), icon: ScanLine },
             { title: 'Presensi Event', href: attendance.event(), icon: ScanLine },
         );
     }
 
     if (permissions.includes('view reports')) {
-        quickLinks.push({ title: 'Laporan', href: reports.dhuhur(), icon: FileText });
+        quickLinks.push({ title: 'Laporan', href: reports.prayer(), icon: FileText });
     }
 
     return (
@@ -92,14 +92,14 @@ export default function Dashboard({ stats }: DashboardProps) {
                                 </CardContent>
                             </Card>
                         )}
-                        {stats.today_dhuhur !== undefined && (
+                        {stats.today_prayer !== undefined && (
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Presensi Dhuhur Hari Ini</CardTitle>
+                                    <CardTitle className="text-sm font-medium">Presensi Sholat Hari Ini</CardTitle>
                                     <ScanLine className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">{stats.today_dhuhur}</div>
+                                    <div className="text-2xl font-bold">{stats.today_prayer}</div>
                                 </CardContent>
                             </Card>
                         )}

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Classroom;
 use App\Models\Event;
+use App\Services\PrayerService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -12,19 +13,23 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-    public function dhuhur(Request $request): Response
+    public function prayer(Request $request, PrayerService $prayerService): Response
     {
+        $prayerTypes = $prayerService->getAllPrayerTypes();
+
         $attendances = Attendance::query()
-            ->where('attendance_type', 'dhuhur')
+            ->whereIn('attendance_type', $prayerTypes)
             ->with(['student:id,name,classroom_id', 'student.classroom:id,name', 'operator:id,name'])
             ->when($request->date_from, fn ($q) => $q->where('attendance_date', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) => $q->where('attendance_date', '<=', $request->date_to))
             ->when($request->classroom_id, fn ($q) => $q->whereHas('student', fn ($q2) => $q2->where('classroom_id', $request->classroom_id)))
+            ->when($request->prayer_type, fn ($q, $type) => $q->where('attendance_type', $type))
             ->latest('attendance_date')
             ->paginate(20)
             ->through(fn (Attendance $attendance) => [
                 'student_name' => $attendance->student->name,
                 'classroom_name' => $attendance->student->classroom?->name,
+                'prayer_type' => $prayerService->getPrayerLabel($attendance->attendance_type),
                 'operator_name' => $attendance->operator->name,
                 'attendance_date' => $attendance->attendance_date->format('d M Y'),
                 'attended_at' => $attendance->attended_at->format('H:i'),
@@ -32,10 +37,11 @@ class ReportController extends Controller
 
         $classrooms = Classroom::query()->orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('reports/dhuhur', [
+        return Inertia::render('reports/prayer', [
             'attendances' => $attendances,
             'classrooms' => $classrooms,
-            'filters' => $request->only(['date_from', 'date_to', 'classroom_id']),
+            'filters' => $request->only(['date_from', 'date_to', 'classroom_id', 'prayer_type']),
+            'prayer_types' => collect($prayerTypes)->mapWithKeys(fn ($t) => [$t => $prayerService->getPrayerLabel($t)]),
         ]);
     }
 
@@ -59,32 +65,36 @@ class ReportController extends Controller
         ]);
     }
 
-    public function exportDhuhur(Request $request): StreamedResponse
+    public function exportPrayer(Request $request, PrayerService $prayerService): StreamedResponse
     {
+        $prayerTypes = $prayerService->getAllPrayerTypes();
+
         $attendances = Attendance::query()
-            ->where('attendance_type', 'dhuhur')
-            ->with(['student:id,name,classroom_id', 'student.classroom:id,name', 'operator:id,name'])
+            ->whereIn('attendance_type', $prayerTypes)
+            ->with(['student:id,name,nis,classroom_id', 'student.classroom:id,name', 'operator:id,name'])
             ->when($request->date_from, fn ($q) => $q->where('attendance_date', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) => $q->where('attendance_date', '<=', $request->date_to))
             ->when($request->classroom_id, fn ($q) => $q->whereHas('student', fn ($q2) => $q2->where('classroom_id', $request->classroom_id)))
+            ->when($request->prayer_type, fn ($q, $type) => $q->where('attendance_type', $type))
             ->latest('attendance_date')
             ->get();
 
-        $filename = 'rekap_presensi_dhuhur_'.now()->format('Y-m-d').'.csv';
+        $filename = 'rekap_presensi_sholat_'.now()->format('Y-m-d').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
-        $callback = function () use ($attendances) {
+        $callback = function () use ($attendances, $prayerService) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Tanggal', 'Waktu', 'NIS', 'Nama Siswa', 'Kelas', 'Operator']);
+            fputcsv($file, ['Tanggal', 'Waktu', 'Jenis Sholat', 'NIS', 'Nama Siswa', 'Kelas', 'Operator']);
 
             foreach ($attendances as $attendance) {
                 fputcsv($file, [
                     $attendance->attendance_date->format('d M Y'),
                     $attendance->attended_at->format('H:i'),
+                    $prayerService->getPrayerLabel($attendance->attendance_type),
                     $attendance->student->nis ?? '-',
                     $attendance->student->name,
                     $attendance->student->classroom?->name ?? '-',

@@ -23,6 +23,7 @@ interface Classroom {
 interface Attendance {
     student_name: string;
     classroom_name: string | null;
+    prayer_type: string;
     operator_name: string;
     attendance_date: string;
     attended_at: string;
@@ -38,18 +39,20 @@ interface PaginatedData {
     next_page_url: string | null;
 }
 
-export default function ReportsDhuhur({
+export default function ReportsPrayer({
     attendances,
     classrooms,
     filters,
+    prayer_types,
 }: {
     attendances: PaginatedData;
     classrooms: Classroom[];
-    filters: { date_from?: string; date_to?: string; classroom_id?: string };
+    filters: { date_from?: string; date_to?: string; classroom_id?: string; prayer_type?: string };
+    prayer_types: Record<string, string>;
 }) {
     const handleFilter = (key: string, value: string) => {
         router.get(
-            reports.dhuhur(),
+            reports.prayer(),
             { ...filters, [key]: value },
             { preserveState: true }
         );
@@ -60,23 +63,24 @@ export default function ReportsDhuhur({
         if (filters.date_from) params.set('date_from', filters.date_from);
         if (filters.date_to) params.set('date_to', filters.date_to);
         if (filters.classroom_id) params.set('classroom_id', filters.classroom_id);
-        window.location.href = `${reports.export.dhuhur.url()}?${params.toString()}`;
+        if (filters.prayer_type) params.set('prayer_type', filters.prayer_type);
+        window.location.href = `${reports.export.prayer.url()}?${params.toString()}`;
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Laporan', href: '/reports' },
-        { title: 'Presensi Dhuhur', href: reports.dhuhur() },
+        { title: 'Presensi Sholat Berjamaah', href: reports.prayer() },
     ];
 
     return (
         <>
-            <Head title="Laporan Presensi Dhuhur" />
+            <Head title="Laporan Presensi Sholat Berjamaah" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold">Laporan Presensi Dhuhur</h1>
-                        <p className="text-muted-foreground">Rekap presensi sholat dhuhur</p>
+                        <h1 className="text-2xl font-bold">Laporan Presensi Sholat Berjamaah</h1>
+                        <p className="text-muted-foreground">Rekap presensi sholat berjamaah</p>
                     </div>
                     <Button onClick={handleExport}>
                         <Download className="mr-2 h-4 w-4" /> Export CSV
@@ -88,7 +92,7 @@ export default function ReportsDhuhur({
                         <CardTitle>Filter</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid gap-4 md:grid-cols-3">
+                        <div className="grid gap-4 md:grid-cols-4">
                             <div>
                                 <Label htmlFor="date_from">Dari Tanggal</Label>
                                 <Input
@@ -126,6 +130,25 @@ export default function ReportsDhuhur({
                                     </SelectContent>
                                 </Select>
                             </div>
+                            <div>
+                                <Label htmlFor="prayer_type">Jenis Sholat</Label>
+                                <Select
+                                    value={filters.prayer_type || 'all'}
+                                    onValueChange={(value) => handleFilter('prayer_type', value === 'all' ? '' : value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Semua Sholat" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Semua Sholat</SelectItem>
+                                        {Object.entries(prayer_types).map(([key, label]) => (
+                                            <SelectItem key={key} value={key}>
+                                                {label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -142,6 +165,7 @@ export default function ReportsDhuhur({
                                     <tr className="border-b">
                                         <th className="px-4 py-2 text-left font-medium">Tanggal</th>
                                         <th className="px-4 py-2 text-left font-medium">Waktu</th>
+                                        <th className="px-4 py-2 text-left font-medium">Jenis Sholat</th>
                                         <th className="px-4 py-2 text-left font-medium">Nama Siswa</th>
                                         <th className="px-4 py-2 text-left font-medium">Kelas</th>
                                         <th className="px-4 py-2 text-left font-medium">Operator</th>
@@ -152,6 +176,9 @@ export default function ReportsDhuhur({
                                         <tr key={i} className="border-b">
                                             <td className="px-4 py-2">{att.attendance_date}</td>
                                             <td className="px-4 py-2">{att.attended_at}</td>
+                                            <td className="px-4 py-2">
+                                                <span className="font-medium">{att.prayer_type}</span>
+                                            </td>
                                             <td className="px-4 py-2 font-medium">{att.student_name}</td>
                                             <td className="px-4 py-2">{att.classroom_name || '-'}</td>
                                             <td className="px-4 py-2">{att.operator_name}</td>
@@ -185,10 +212,10 @@ export default function ReportsDhuhur({
     );
 }
 
-ReportsDhuhur.layout = {
+ReportsPrayer.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Laporan', href: '/reports' },
-        { title: 'Presensi Dhuhur', href: reports.dhuhur() },
+        { title: 'Presensi Sholat Berjamaah', href: reports.prayer() },
     ],
 };

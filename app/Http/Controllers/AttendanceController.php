@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Event;
 use App\Models\Student;
+use App\Services\PrayerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,12 +13,18 @@ use Inertia\Response;
 
 class AttendanceController extends Controller
 {
-    public function dhuhur(): Response
+    public function prayer(PrayerService $prayerService): Response
     {
         $today = now()->format('Y-m-d');
 
+        try {
+            $currentPrayer = $prayerService->determinePrayerType();
+        } catch (\InvalidArgumentException) {
+            $currentPrayer = null;
+        }
+
         $recentAttendances = Attendance::query()
-            ->where('attendance_type', 'dhuhur')
+            ->whereIn('attendance_type', $prayerService->getAllPrayerTypes())
             ->where('attendance_date', $today)
             ->with(['student:id,name', 'operator:id,name'])
             ->latest('attended_at')
@@ -25,22 +32,25 @@ class AttendanceController extends Controller
             ->get()
             ->map(fn (Attendance $attendance) => [
                 'student_name' => $attendance->student->name,
+                'prayer_type' => $prayerService->getPrayerLabel($attendance->attendance_type),
                 'operator_name' => $attendance->operator->name,
                 'attended_at' => $attendance->attended_at->format('H:i'),
             ]);
 
         $todayCount = Attendance::query()
-            ->where('attendance_type', 'dhuhur')
+            ->whereIn('attendance_type', $prayerService->getAllPrayerTypes())
             ->where('attendance_date', $today)
             ->count();
 
-        return Inertia::render('attendance/dhuhur', [
+        return Inertia::render('attendance/prayer', [
             'recent_attendances' => $recentAttendances,
             'today_count' => $todayCount,
+            'current_prayer' => $currentPrayer,
+            'prayer_label' => $currentPrayer ? $prayerService->getPrayerLabel($currentPrayer) : null,
         ]);
     }
 
-    public function storeDhuhur(Request $request): JsonResponse
+    public function storePrayer(Request $request, PrayerService $prayerService): JsonResponse
     {
         $validated = $request->validate([
             'qr_code' => ['required', 'string'],
@@ -58,18 +68,28 @@ class AttendanceController extends Controller
             ], 404);
         }
 
+        try {
+            $prayerType = $prayerService->determinePrayerType();
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+
         $today = now()->format('Y-m-d');
+        $prayerLabel = $prayerService->getPrayerLabel($prayerType);
 
         $existing = Attendance::query()
             ->where('student_id', $student->id)
-            ->where('attendance_type', 'dhuhur')
+            ->where('attendance_type', $prayerType)
             ->where('attendance_date', $today)
             ->exists();
 
         if ($existing) {
             return response()->json([
                 'success' => false,
-                'message' => 'Siswa sudah presensi hari ini.',
+                'message' => "Siswa sudah presensi sholat {$prayerLabel} hari ini.",
             ], 409);
         }
 
@@ -77,16 +97,17 @@ class AttendanceController extends Controller
             'school_id' => $student->school_id,
             'student_id' => $student->id,
             'operator_id' => auth()->id(),
-            'attendance_type' => 'dhuhur',
+            'attendance_type' => $prayerType,
             'attendance_date' => $today,
             'attended_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Presensi berhasil dicatat.',
+            'message' => "Presensi sholat {$prayerLabel} berhasil dicatat.",
             'data' => [
                 'student_name' => $student->name,
+                'prayer_type' => $prayerLabel,
                 'attended_at' => $attendance->attended_at->format('H:i'),
             ],
         ]);

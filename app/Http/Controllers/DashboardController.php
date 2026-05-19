@@ -6,13 +6,15 @@ use App\Models\Attendance;
 use App\Models\Event;
 use App\Models\School;
 use App\Models\Student;
+use App\Services\PrayerService;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    public function index(PrayerService $prayerService): Response
     {
+        $prayerTypes = $prayerService->getAllPrayerTypes();
         $stats = [];
 
         if (auth()->user()->isSuperadmin()) {
@@ -21,8 +23,8 @@ class DashboardController extends Controller
                 'total_students' => Student::count(),
                 'total_classrooms' => 0,
                 'total_events' => 0,
-                'today_dhuhur' => Attendance::query()
-                    ->where('attendance_type', 'dhuhur')
+                'today_prayer' => Attendance::query()
+                    ->whereIn('attendance_type', $prayerTypes)
                     ->where('attendance_date', now())
                     ->count(),
                 'active_events' => 0,
@@ -33,9 +35,9 @@ class DashboardController extends Controller
             $stats = [
                 'total_students' => Student::query()->where('school_id', $schoolId)->count(),
                 'total_classrooms' => 0,
-                'today_dhuhur' => Attendance::query()
+                'today_prayer' => Attendance::query()
                     ->where('school_id', $schoolId)
-                    ->where('attendance_type', 'dhuhur')
+                    ->whereIn('attendance_type', $prayerTypes)
                     ->where('attendance_date', now())
                     ->count(),
                 'active_events' => Event::query()

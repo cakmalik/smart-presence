@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, School, Users, GraduationCap, CalendarDays, ScanLine, FileText } from 'lucide-react';
+import { BookOpen, FolderGit2, LayoutGrid, School, Users, GraduationCap, CalendarDays, ScanLine, FileText, Shield, UserCog } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -20,11 +20,13 @@ import students from '@/routes/students';
 import events from '@/routes/events';
 import attendance from '@/routes/attendance';
 import reports from '@/routes/reports';
+import users from '@/routes/users';
+import roles from '@/routes/roles';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const { auth } = usePage().props as any;
-    const roles = auth?.roles || [];
+    const roles_data = auth?.roles || [];
     const permissions = auth?.permissions || [];
 
     const overviewNavItems: NavItem[] = [
@@ -36,11 +38,27 @@ export function AppSidebar() {
     ];
 
     const masterNavItems: NavItem[] = [];
-    if (roles.includes('superadmin')) {
+    if (roles_data.includes('superadmin')) {
         masterNavItems.push({
             title: 'Sekolah',
             href: schools.index(),
             icon: School,
+        });
+    }
+
+    if (permissions.includes('manage users')) {
+        masterNavItems.push({
+            title: 'Pengguna',
+            href: users.index(),
+            icon: UserCog,
+        });
+    }
+
+    if (roles_data.includes('superadmin')) {
+        masterNavItems.push({
+            title: 'Roles & Permissions',
+            href: roles.index(),
+            icon: Shield,
         });
     }
 
@@ -71,8 +89,8 @@ export function AppSidebar() {
 
     if (permissions.includes('scan attendance')) {
         attendanceNavItems.push({
-            title: 'Presensi Dhuhur',
-            href: attendance.dhuhur(),
+            title: 'Presensi Sholat Berjamaah',
+            href: attendance.prayer(),
             icon: ScanLine,
         });
         attendanceNavItems.push({
@@ -85,8 +103,8 @@ export function AppSidebar() {
     const reportNavItems: NavItem[] = [];
     if (permissions.includes('view reports')) {
         reportNavItems.push({
-            title: 'Laporan Dhuhur',
-            href: reports.dhuhur(),
+            title: 'Laporan Sholat Berjamaah',
+            href: reports.prayer(),
             icon: FileText,
         });
         reportNavItems.push({

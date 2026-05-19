@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Scan, CheckCircle, XCircle } from 'lucide-react';
+import { Scan, CheckCircle, XCircle, Clock } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,18 +13,23 @@ import { Html5Qrcode } from 'html5-qrcode';
 
 interface RecentAttendance {
     student_name: string;
+    prayer_type: string;
     operator_name: string;
     attended_at: string;
 }
 
-export default function AttendanceDhuhur({
+export default function AttendancePrayer({
     recent_attendances,
     today_count,
+    current_prayer,
+    prayer_label,
 }: {
     recent_attendances: RecentAttendance[];
     today_count: number;
+    current_prayer: string | null;
+    prayer_label: string | null;
 }) {
-    const [scanResult, setScanResult] = useState<{ success: boolean; message: string; data?: { student_name: string; attended_at: string } } | null>(null);
+    const [scanResult, setScanResult] = useState<{ success: boolean; message: string; data?: { student_name: string; prayer_type: string; attended_at: string } } | null>(null);
     const [isScanning, setIsScanning] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [manualCode, setManualCode] = useState('');
@@ -70,7 +75,7 @@ export default function AttendanceDhuhur({
         setScanResult(null);
 
         router.post(
-            attendance.dhuhur.store.url(),
+            attendance.prayer.store.url(),
             { qr_code: qrCode },
             {
                 preserveScroll: true,
@@ -79,7 +84,7 @@ export default function AttendanceDhuhur({
                     setIsSubmitting(false);
                 },
                 onError: (errors) => {
-                    setScanResult({ success: false, message: (errors as any).qr_code || 'Presensi gagal' });
+                    setScanResult({ success: false, message: (errors as any).qr_code || (errors as any).message || 'Presensi gagal' });
                     setIsSubmitting(false);
                 },
             }
@@ -94,16 +99,29 @@ export default function AttendanceDhuhur({
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Presensi Dhuhur', href: attendance.dhuhur() },
+        { title: 'Presensi Sholat Berjamaah', href: attendance.prayer() },
     ];
 
     return (
         <>
-            <Head title="Presensi Sholat Dhuhur" />
+            <Head title="Presensi Sholat Berjamaah" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div>
-                    <h1 className="text-2xl font-bold">Presensi Sholat Dhuhur</h1>
-                    <p className="text-muted-foreground">Scan QR Code siswa untuk presensi</p>
+                    <h1 className="text-2xl font-bold">Presensi Sholat Berjamaah</h1>
+                    <p className="text-muted-foreground">
+                        Scan QR Code siswa untuk presensi
+                        {prayer_label && (
+                            <Badge variant="default" className="ml-2">
+                                <Clock className="mr-1 h-3 w-3" />
+                                {prayer_label}
+                            </Badge>
+                        )}
+                    </p>
+                    {!current_prayer && (
+                        <p className="mt-1 text-sm text-amber-600">
+                            Saat ini bukan waktu sholat berjamaah. Jadwal: Dzuhur (10:00-14:00), Ashar (14:00-16:00).
+                        </p>
+                    )}
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -171,7 +189,10 @@ export default function AttendanceDhuhur({
                                             </p>
                                             {scanResult.data && (
                                                 <p className="text-sm">
-                                                    {scanResult.data.student_name} - {scanResult.data.attended_at}
+                                                    {scanResult.data.student_name}
+                                                    {scanResult.data.prayer_type && ` - ${scanResult.data.prayer_type}`}
+                                                    {' - '}
+                                                    {scanResult.data.attended_at}
                                                 </p>
                                             )}
                                         </div>
@@ -190,7 +211,9 @@ export default function AttendanceDhuhur({
                                         <div key={i} className="flex items-center justify-between border-b pb-2">
                                             <div>
                                                 <p className="font-medium">{att.student_name}</p>
-                                                <p className="text-sm text-muted-foreground">Operator: {att.operator_name}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {att.prayer_type} - Operator: {att.operator_name}
+                                                </p>
                                             </div>
                                             <Badge variant="secondary">{att.attended_at}</Badge>
                                         </div>
@@ -208,9 +231,9 @@ export default function AttendanceDhuhur({
     );
 }
 
-AttendanceDhuhur.layout = {
+AttendancePrayer.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Presensi Dhuhur', href: attendance.dhuhur() },
+        { title: 'Presensi Sholat Berjamaah', href: attendance.prayer() },
     ],
 };

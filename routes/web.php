@@ -5,8 +5,10 @@ use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\UserController;
 use App\Models\Student;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +19,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['can:manage schools'])->group(function () {
         Route::resource('schools', SchoolController::class)->except(['show']);
+    });
+
+    Route::middleware(['can:manage users'])->group(function () {
+        Route::resource('users', UserController::class)->except(['show']);
+    });
+
+    Route::middleware(['role:superadmin'])->group(function () {
+        Route::resource('roles', RoleController::class)->except(['show']);
     });
 
     Route::middleware(['can:manage classrooms'])->group(function () {
@@ -42,16 +52,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'student' => $student ? ['id' => $student->id, 'name' => $student->name, 'nis' => $student->nis] : null,
             ]);
         })->name('attendance.scan');
-        Route::get('attendance/dhuhur', [AttendanceController::class, 'dhuhur'])->name('attendance.dhuhur');
-        Route::post('attendance/dhuhur', [AttendanceController::class, 'storeDhuhur'])->name('attendance.dhuhur.store');
+        Route::get('attendance/prayer', [AttendanceController::class, 'prayer'])->name('attendance.prayer');
+        Route::post('attendance/prayer', [AttendanceController::class, 'storePrayer'])->name('attendance.prayer.store');
         Route::get('attendance/event', [AttendanceController::class, 'event'])->name('attendance.event');
         Route::post('attendance/event', [AttendanceController::class, 'storeEvent'])->name('attendance.event.store');
     });
 
     Route::middleware(['can:view reports'])->group(function () {
-        Route::get('reports/dhuhur', [ReportController::class, 'dhuhur'])->name('reports.dhuhur');
+        Route::get('reports/prayer', [ReportController::class, 'prayer'])->name('reports.prayer');
         Route::get('reports/event', [ReportController::class, 'event'])->name('reports.event');
-        Route::get('reports/export/dhuhur', [ReportController::class, 'exportDhuhur'])->name('reports.export.dhuhur');
+        Route::get('reports/export/prayer', [ReportController::class, 'exportPrayer'])->name('reports.export.prayer');
         Route::get('reports/export/event/{event}', [ReportController::class, 'exportEvent'])->name('reports.export.event');
     });
 });

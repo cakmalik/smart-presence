@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('student_id')->constrained()->onDelete('cascade');
             $table->foreignId('operator_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('event_id')->nullable()->constrained()->onDelete('cascade');
-            $table->enum('attendance_type', ['dhuhur', 'event']);
+            $table->string('attendance_type');
             $table->date('attendance_date');
             $table->time('attended_at');
             $table->timestamps();
