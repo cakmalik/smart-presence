@@ -45,8 +45,8 @@ class PrayerService
             }
         }
 
-        $labels = collect($times)->pluck('label', 'start_time')->map(
-            fn ($l, $s) => "{$l} ({$times[array_search($l, array_column($times, 'label'))]['start_time']}-{$times[array_search($l, array_column($times, 'label'))]['end_time']})"
+        $labels = collect($times)->map(
+            fn ($time) => "{$time['label']} ({$time['start_time']}-{$time['end_time']})"
         )->implode(', ');
 
         throw new InvalidArgumentException("Saat ini bukan waktu sholat berjamaah. Jadwal: {$labels}");
