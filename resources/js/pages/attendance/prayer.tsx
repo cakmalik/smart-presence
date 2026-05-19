@@ -75,13 +75,15 @@ export default function AttendancePrayer({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const scannerContainerRef = useRef<HTMLDivElement>(null);
+    const isProcessingQr = useRef(false);
+    const lastQrRef = useRef('');
 
     const [pendingConfirmation, setPendingConfirmation] = useState<{
         qrCode: string;
         student: { name: string; nis: string | null; classroom: string | null };
     } | null>(null);
-    const [isLookingUp, setIsLookingUp] = useState(false);
     const [lookupError, setLookupError] = useState<string | null>(null);
+    const [isLookingUp, setIsLookingUp] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<StudentResult[]>([]);
@@ -116,28 +118,34 @@ export default function AttendancePrayer({
     };
 
     useEffect(() => {
+        startScanner();
+
         return () => {
             stopScanner();
         };
     }, []);
 
     const onQrDetected = async (decodedText: string) => {
-        if (isLookingUp || pendingConfirmation) return;
+        if (isProcessingQr.current) return;
 
-        await stopScanner();
+        const qrValue = decodedText.includes('/')
+            ? decodedText.substring(decodedText.lastIndexOf('/') + 1)
+            : decodedText;
+
+        if (qrValue === lastQrRef.current) return;
+        lastQrRef.current = qrValue;
+
+        isProcessingQr.current = true;
         setIsLookingUp(true);
         setLookupError(null);
 
         try {
-            const qrValue = decodedText.includes('/')
-                ? decodedText.substring(decodedText.lastIndexOf('/') + 1)
-                : decodedText;
-
             const res = await fetch(attendance.scan.url(qrValue));
             const data = await res.json();
 
             if (!data.found || !data.student) {
                 setLookupError('Siswa tidak ditemukan atau tidak aktif.');
+
                 return;
             }
 
@@ -150,6 +158,14 @@ export default function AttendancePrayer({
         } finally {
             setIsLookingUp(false);
         }
+    };
+
+    const resetScanner = () => {
+        isProcessingQr.current = false;
+        lastQrRef.current = '';
+        setIsLookingUp(false);
+        setPendingConfirmation(null);
+        setLookupError(null);
     };
 
     const confirmAttendance = async () => {
@@ -166,27 +182,26 @@ export default function AttendancePrayer({
                         ? `${data.data.student_name} · ${data.data.prayer_type} · ${data.data.attended_at}`
                         : undefined,
                 });
+                setPendingConfirmation(null);
                 setTimeout(() => router.reload(), 1500);
             } else {
                 toast.error(data.message || 'Presensi gagal');
+                resetScanner();
             }
         } catch {
             toast.error('Gagal terhubung ke server.');
+            resetScanner();
         } finally {
             setIsSubmitting(false);
-            setPendingConfirmation(null);
         }
     };
 
     const cancelConfirmation = () => {
-        setPendingConfirmation(null);
-        setLookupError(null);
-        startScanner();
+        resetScanner();
     };
 
     const dismissError = () => {
-        setLookupError(null);
-        startScanner();
+        resetScanner();
     };
 
     const handleSearchInput = (value: string) => {
