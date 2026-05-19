@@ -64,6 +64,8 @@ class StudentController extends Controller
             'status' => ['required', 'in:active,inactive'],
         ]);
 
+        $classroom = Classroom::findOrFail($validated['classroom_id']);
+        $validated['school_id'] = $classroom->school_id;
         $validated['qr_code'] = Str::uuid()->toString();
 
         Student::create($validated);
@@ -98,6 +100,9 @@ class StudentController extends Controller
             'classroom_id' => ['required', 'exists:classrooms,id'],
             'status' => ['required', 'in:active,inactive'],
         ]);
+
+        $classroom = Classroom::findOrFail($validated['classroom_id']);
+        $validated['school_id'] = $classroom->school_id;
 
         $student->update($validated);
 
