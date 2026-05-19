@@ -182,7 +182,7 @@ export default function AttendancePrayer({
                         ? `${data.data.student_name} · ${data.data.prayer_type} · ${data.data.attended_at}`
                         : undefined,
                 });
-                setPendingConfirmation(null);
+                resetScanner();
                 setTimeout(() => router.reload(), 1500);
             } else {
                 toast.error(data.message || 'Presensi gagal');
