@@ -128,14 +128,14 @@ export default function StudentsIndex({
                                 />
                             </div>
                             <Select
-                                defaultValue={filters.classroom_id}
-                                onValueChange={(value) => router.get(students.index(), { search: filters.search, classroom_id: value }, { preserveState: true })}
+                                value={filters.classroom_id || 'all'}
+                                onValueChange={(value) => router.get(students.index(), { search: filters.search, classroom_id: value === 'all' ? '' : value }, { preserveState: true })}
                             >
                                 <SelectTrigger className="w-[200px]">
                                     <SelectValue placeholder="Semua Kelas" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Semua Kelas</SelectItem>
+                                    <SelectItem value="all">Semua Kelas</SelectItem>
                                     {classrooms.map((c) => (
                                         <SelectItem key={c.id} value={String(c.id)}>
                                             {c.name}

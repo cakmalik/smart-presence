@@ -110,14 +110,14 @@ export default function ReportsDhuhur({
                             <div>
                                 <Label htmlFor="classroom_id">Kelas</Label>
                                 <Select
-                                    defaultValue={filters.classroom_id}
-                                    onValueChange={(value) => handleFilter('classroom_id', value)}
+                                    value={filters.classroom_id || 'all'}
+                                    onValueChange={(value) => handleFilter('classroom_id', value === 'all' ? '' : value)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Semua Kelas" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Semua Kelas</SelectItem>
+                                        <SelectItem value="all">Semua Kelas</SelectItem>
                                         {classrooms.map((c) => (
                                             <SelectItem key={c.id} value={String(c.id)}>
                                                 {c.name}
