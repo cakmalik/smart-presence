@@ -31,7 +31,7 @@ class AttendanceController extends Controller
             ->where('attendance_date', $today)
             ->with(['student:id,name', 'operator:id,name'])
             ->latest('attended_at')
-            ->take(20)
+            ->take(5)
             ->get()
             ->map(fn (Attendance $attendance) => [
                 'student_name' => $attendance->student->name,

@@ -23,6 +23,7 @@ interface Classroom {
 interface Attendance {
     student_name: string;
     classroom_name: string | null;
+    nis: string | null;
     prayer_type: string;
     operator_name: string;
     attendance_date: string;
@@ -47,9 +48,11 @@ export default function ReportsPrayer({
 }: {
     attendances: PaginatedData;
     classrooms: Classroom[];
-    filters: { date_from?: string; date_to?: string; classroom_id?: string; prayer_type?: string };
+    filters: { date_from?: string; date_to?: string; classroom_id?: string; prayer_type?: string; filter?: string };
     prayer_types: Record<string, string>;
 }) {
+    const currentFilter = filters.filter || 'present';
+
     const handleFilter = (key: string, value: string) => {
         router.get(
             reports.prayer(),
@@ -64,6 +67,7 @@ export default function ReportsPrayer({
         if (filters.date_to) params.set('date_to', filters.date_to);
         if (filters.classroom_id) params.set('classroom_id', filters.classroom_id);
         if (filters.prayer_type) params.set('prayer_type', filters.prayer_type);
+        if (filters.filter) params.set('filter', filters.filter);
         window.location.href = `${reports.export.prayer.url()}?${params.toString()}`;
     };
 
@@ -92,7 +96,7 @@ export default function ReportsPrayer({
                         <CardTitle>Filter</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid gap-4 md:grid-cols-4">
+                        <div className="grid gap-4 md:grid-cols-5">
                             <div>
                                 <Label htmlFor="date_from">Dari Tanggal</Label>
                                 <Input
@@ -149,6 +153,21 @@ export default function ReportsPrayer({
                                     </SelectContent>
                                 </Select>
                             </div>
+                            <div>
+                                <Label htmlFor="filter">Status</Label>
+                                <Select
+                                    value={currentFilter}
+                                    onValueChange={(value) => handleFilter('filter', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="present">Hadir</SelectItem>
+                                        <SelectItem value="absent">Tidak Hadir</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -164,24 +183,45 @@ export default function ReportsPrayer({
                                 <thead>
                                     <tr className="border-b">
                                         <th className="px-4 py-2 text-left font-medium">Tanggal</th>
-                                        <th className="px-4 py-2 text-left font-medium">Waktu</th>
+                                        {currentFilter === 'present' && (
+                                            <th className="px-4 py-2 text-left font-medium">Waktu</th>
+                                        )}
                                         <th className="px-4 py-2 text-left font-medium">Jenis Sholat</th>
+                                        {currentFilter === 'absent' && (
+                                            <th className="px-4 py-2 text-left font-medium">NIS</th>
+                                        )}
                                         <th className="px-4 py-2 text-left font-medium">Nama Siswa</th>
                                         <th className="px-4 py-2 text-left font-medium">Kelas</th>
-                                        <th className="px-4 py-2 text-left font-medium">Operator</th>
+                                        {currentFilter === 'present' && (
+                                            <th className="px-4 py-2 text-left font-medium">Operator</th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {attendances.data.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                                                Tidak ada data
+                                            </td>
+                                        </tr>
+                                    )}
                                     {attendances.data.map((att, i) => (
                                         <tr key={i} className="border-b">
                                             <td className="px-4 py-2">{att.attendance_date}</td>
-                                            <td className="px-4 py-2">{att.attended_at}</td>
+                                            {currentFilter === 'present' && (
+                                                <td className="px-4 py-2">{att.attended_at}</td>
+                                            )}
                                             <td className="px-4 py-2">
                                                 <span className="font-medium">{att.prayer_type}</span>
                                             </td>
+                                            {currentFilter === 'absent' && (
+                                                <td className="px-4 py-2">{att.nis || '-'}</td>
+                                            )}
                                             <td className="px-4 py-2 font-medium">{att.student_name}</td>
                                             <td className="px-4 py-2">{att.classroom_name || '-'}</td>
-                                            <td className="px-4 py-2">{att.operator_name}</td>
+                                            {currentFilter === 'present' && (
+                                                <td className="px-4 py-2">{att.operator_name}</td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
