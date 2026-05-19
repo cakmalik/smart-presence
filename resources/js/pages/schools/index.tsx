@@ -53,7 +53,7 @@ export default function SchoolsIndex({ schools: schoolsData }: { schools: Pagina
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Manajemen Sekolah" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
@@ -153,6 +153,13 @@ export default function SchoolsIndex({ schools: schoolsData }: { schools: Pagina
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+SchoolsIndex.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Sekolah', href: schools.index() },
+    ],
+};

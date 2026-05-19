@@ -27,7 +27,7 @@ export function AppSidebar() {
     const roles = auth?.roles || [];
     const permissions = auth?.permissions || [];
 
-    const mainNavItems: NavItem[] = [
+    const overviewNavItems: NavItem[] = [
         {
             title: 'Dashboard',
             href: dashboard(),
@@ -35,8 +35,9 @@ export function AppSidebar() {
         },
     ];
 
+    const masterNavItems: NavItem[] = [];
     if (roles.includes('superadmin')) {
-        mainNavItems.push({
+        masterNavItems.push({
             title: 'Sekolah',
             href: schools.index(),
             icon: School,
@@ -44,7 +45,7 @@ export function AppSidebar() {
     }
 
     if (permissions.includes('manage classrooms')) {
-        mainNavItems.push({
+        masterNavItems.push({
             title: 'Kelas',
             href: classrooms.index(),
             icon: Users,
@@ -52,15 +53,16 @@ export function AppSidebar() {
     }
 
     if (permissions.includes('manage students')) {
-        mainNavItems.push({
+        masterNavItems.push({
             title: 'Siswa',
             href: students.index(),
             icon: GraduationCap,
         });
     }
 
+    const attendanceNavItems: NavItem[] = [];
     if (permissions.includes('manage events')) {
-        mainNavItems.push({
+        attendanceNavItems.push({
             title: 'Event',
             href: events.index(),
             icon: CalendarDays,
@@ -68,25 +70,26 @@ export function AppSidebar() {
     }
 
     if (permissions.includes('scan attendance')) {
-        mainNavItems.push({
+        attendanceNavItems.push({
             title: 'Presensi Dhuhur',
             href: attendance.dhuhur(),
             icon: ScanLine,
         });
-        mainNavItems.push({
+        attendanceNavItems.push({
             title: 'Presensi Event',
             href: attendance.event(),
             icon: ScanLine,
         });
     }
 
+    const reportNavItems: NavItem[] = [];
     if (permissions.includes('view reports')) {
-        mainNavItems.push({
+        reportNavItems.push({
             title: 'Laporan Dhuhur',
             href: reports.dhuhur(),
             icon: FileText,
         });
-        mainNavItems.push({
+        reportNavItems.push({
             title: 'Laporan Event',
             href: reports.event(),
             icon: FileText,
@@ -121,7 +124,10 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain label="Utama" items={overviewNavItems} />
+                <NavMain label="Data Master" items={masterNavItems} />
+                <NavMain label="Presensi" items={attendanceNavItems} />
+                <NavMain label="Laporan" items={reportNavItems} />
             </SidebarContent>
 
             <SidebarFooter>
