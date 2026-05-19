@@ -35,7 +35,7 @@ class ClassroomController extends Controller
     public function create(): Response
     {
         $teachers = User::query()
-            ->role('admin|operator')
+            ->role(['admin', 'operator'])
             ->when(auth()->user()->school_id, fn ($q) => $q->where('school_id', auth()->user()->school_id))
             ->get(['id', 'name']);
 
@@ -60,7 +60,7 @@ class ClassroomController extends Controller
     public function edit(Classroom $classroom): Response
     {
         $teachers = User::query()
-            ->role('admin|operator')
+            ->role(['admin', 'operator'])
             ->when(auth()->user()->school_id, fn ($q) => $q->where('school_id', auth()->user()->school_id))
             ->get(['id', 'name']);
 
