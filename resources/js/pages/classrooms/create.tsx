@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
@@ -21,11 +22,18 @@ interface Teacher {
 }
 
 export default function ClassroomsCreate({ teachers }: { teachers: Teacher[] }) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, transform } = useForm({
         name: '',
         grade: '',
-        teacher_id: '',
+        teacher_id: 'none',
     });
+
+    useEffect(() => {
+        transform((data) => ({
+            ...data,
+            teacher_id: data.teacher_id === 'none' ? '' : data.teacher_id,
+        }));
+    }, [transform]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,7 +86,7 @@ export default function ClassroomsCreate({ teachers }: { teachers: Teacher[] }) 
                                         <SelectValue placeholder="Pilih wali kelas" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Tidak ada</SelectItem>
+                                        <SelectItem value="none">Tidak ada</SelectItem>
                                         {teachers.map((teacher) => (
                                             <SelectItem key={teacher.id} value={String(teacher.id)}>
                                                 {teacher.name}
