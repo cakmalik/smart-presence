@@ -13,7 +13,13 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, schools, classrooms, students, events, attendance, reports } from '@/routes';
+import { dashboard } from '@/routes';
+import schools from '@/routes/schools';
+import classrooms from '@/routes/classrooms';
+import students from '@/routes/students';
+import events from '@/routes/events';
+import attendance from '@/routes/attendance';
+import reports from '@/routes/reports';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
@@ -76,8 +82,13 @@ export function AppSidebar() {
 
     if (permissions.includes('view reports')) {
         mainNavItems.push({
-            title: 'Laporan',
+            title: 'Laporan Dhuhur',
             href: reports.dhuhur(),
+            icon: FileText,
+        });
+        mainNavItems.push({
+            title: 'Laporan Event',
+            href: reports.event(),
             icon: FileText,
         });
     }

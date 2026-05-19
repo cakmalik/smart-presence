@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { events } from '@/routes';
+import events from '@/routes/events';
 import type { BreadcrumbItem } from '@/types';
 
 export default function EventsCreate() {

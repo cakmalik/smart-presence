@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { classrooms } from '@/routes';
+import classrooms from '@/routes/classrooms';
 import type { BreadcrumbItem } from '@/types';
 
 interface Teacher {

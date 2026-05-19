@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Scan, CheckCircle, XCircle } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { attendance } from '@/routes';
+import attendance from '@/routes/attendance';
 import type { BreadcrumbItem } from '@/types';
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -27,12 +27,11 @@ interface Event {
 export default function AttendanceEvent({ events }: { events: Event[] }) {
     const [scanResult, setScanResult] = useState<{ success: boolean; message: string } | null>(null);
     const [isScanning, setIsScanning] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState('');
     const [manualCode, setManualCode] = useState('');
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const scannerContainerRef = useRef<HTMLDivElement>(null);
-
-    const { data: scanData, post, processing } = useForm({ qr_code: '', event_id: '' });
 
     const startScanner = async () => {
         if (!scannerContainerRef.current || !selectedEvent) return;
@@ -67,17 +66,26 @@ export default function AttendanceEvent({ events }: { events: Event[] }) {
         };
     }, []);
 
-    const submitAttendance = async (qrCode: string) => {
+    const submitAttendance = (qrCode: string) => {
+        if (isSubmitting || !selectedEvent) return;
+        setIsSubmitting(true);
         setScanResult(null);
-        scanData.qr_code = qrCode;
-        scanData.event_id = selectedEvent;
 
-        post(attendance.event.store(), {
-            preserveScroll: true,
-            onError: (errors) => {
-                setScanResult({ success: false, message: errors.qr_code || 'Presensi gagal' });
-            },
-        });
+        router.post(
+            attendance.event.store.url(),
+            { qr_code: qrCode, event_id: selectedEvent },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setScanResult({ success: true, message: 'Presensi berhasil dicatat' });
+                    setIsSubmitting(false);
+                },
+                onError: (errors) => {
+                    setScanResult({ success: false, message: (errors as any).qr_code || 'Presensi gagal' });
+                    setIsSubmitting(false);
+                },
+            }
+        );
     };
 
     const handleManualSubmit = (e: React.FormEvent) => {
@@ -145,7 +153,7 @@ export default function AttendanceEvent({ events }: { events: Event[] }) {
                                         onChange={(e) => setManualCode(e.target.value)}
                                         placeholder="Masukkan kode QR"
                                     />
-                                    <Button type="submit" disabled={!selectedEvent || !manualCode}>
+                                    <Button type="submit" disabled={isSubmitting || !selectedEvent || !manualCode}>
                                         Submit
                                     </Button>
                                 </form>

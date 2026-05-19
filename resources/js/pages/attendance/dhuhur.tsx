@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Scan, CheckCircle, XCircle } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { attendance } from '@/routes';
+import attendance from '@/routes/attendance';
 import type { BreadcrumbItem } from '@/types';
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -26,12 +26,10 @@ export default function AttendanceDhuhur({
 }) {
     const [scanResult, setScanResult] = useState<{ success: boolean; message: string; data?: { student_name: string; attended_at: string } } | null>(null);
     const [isScanning, setIsScanning] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [manualCode, setManualCode] = useState('');
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const scannerContainerRef = useRef<HTMLDivElement>(null);
-
-    const { data: scanData, post, processing } = useForm({ qr_code: '' });
-    const { data: manualData, post: postManual, processing: manualProcessing } = useForm({ qr_code: '' });
 
     const startScanner = async () => {
         if (!scannerContainerRef.current) return;
@@ -66,22 +64,26 @@ export default function AttendanceDhuhur({
         };
     }, []);
 
-    const submitAttendance = async (qrCode: string) => {
+    const submitAttendance = (qrCode: string) => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         setScanResult(null);
-        scanData.qr_code = qrCode;
 
-        post(attendance.dhuhur.store(), {
-            preserveScroll: true,
-            onSuccess: (page) => {
-                const response = page.props as any;
-                if (response.flash?.success) {
-                    setScanResult({ success: true, message: response.flash.success });
-                }
-            },
-            onError: (errors) => {
-                setScanResult({ success: false, message: errors.qr_code || 'Presensi gagal' });
-            },
-        });
+        router.post(
+            attendance.dhuhur.store.url(),
+            { qr_code: qrCode },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setScanResult({ success: true, message: 'Presensi berhasil dicatat' });
+                    setIsSubmitting(false);
+                },
+                onError: (errors) => {
+                    setScanResult({ success: false, message: (errors as any).qr_code || 'Presensi gagal' });
+                    setIsSubmitting(false);
+                },
+            }
+        );
     };
 
     const handleManualSubmit = (e: React.FormEvent) => {
@@ -133,7 +135,7 @@ export default function AttendanceDhuhur({
                                         onChange={(e) => setManualCode(e.target.value)}
                                         placeholder="Masukkan kode QR"
                                     />
-                                    <Button type="submit" disabled={manualProcessing || !manualCode}>
+                                    <Button type="submit" disabled={isSubmitting || !manualCode}>
                                         Submit
                                     </Button>
                                 </form>

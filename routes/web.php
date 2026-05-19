@@ -52,7 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('reports/dhuhur', [ReportController::class, 'dhuhur'])->name('reports.dhuhur');
         Route::get('reports/event', [ReportController::class, 'event'])->name('reports.event');
         Route::get('reports/export/dhuhur', [ReportController::class, 'exportDhuhur'])->name('reports.export.dhuhur');
-        Route::get('reports/export/event', [ReportController::class, 'exportEvent'])->name('reports.export.event');
+        Route::get('reports/export/event/{event}', [ReportController::class, 'exportEvent'])->name('reports.export.event');
     });
 });
 

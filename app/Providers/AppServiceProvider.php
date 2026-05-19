@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,7 +18,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
-        $this->configureInertia();
     }
 
     protected function configureDefaults(): void
@@ -39,24 +37,5 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
-    }
-
-    protected function configureInertia(): void
-    {
-        Inertia::share('auth.roles', function () {
-            if (auth()->check()) {
-                return auth()->user()->roles()->pluck('name')->toArray();
-            }
-
-            return [];
-        });
-
-        Inertia::share('auth.permissions', function () {
-            if (auth()->check()) {
-                return auth()->user()->getPermissionsViaRoles()->pluck('name')->toArray();
-            }
-
-            return [];
-        });
     }
 }

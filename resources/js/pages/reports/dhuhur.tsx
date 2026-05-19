@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { reports } from '@/routes';
+import reports from '@/routes/reports';
 import type { BreadcrumbItem } from '@/types';
 
 interface Classroom {
@@ -30,8 +30,12 @@ interface Attendance {
 
 interface PaginatedData {
     data: Attendance[];
-    links: { first: string; last: string; prev: string | null; next: string | null };
-    meta: { current_page: number; last_page: number; per_page: number; total: number };
+    total: number;
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
 }
 
 export default function ReportsDhuhur({
@@ -56,7 +60,7 @@ export default function ReportsDhuhur({
         if (filters.date_from) params.set('date_from', filters.date_from);
         if (filters.date_to) params.set('date_to', filters.date_to);
         if (filters.classroom_id) params.set('classroom_id', filters.classroom_id);
-        window.location.href = `${reports.export.dhuhur()}?${params.toString()}`;
+        window.location.href = `${reports.export.dhuhur.url()}?${params.toString()}`;
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -129,7 +133,7 @@ export default function ReportsDhuhur({
                 <Card>
                     <CardHeader>
                         <CardTitle>Data Presensi</CardTitle>
-                        <CardDescription>Total {attendances.meta.total} record</CardDescription>
+                        <CardDescription>Total {attendances.total} record</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -159,16 +163,16 @@ export default function ReportsDhuhur({
 
                         <div className="mt-4 flex items-center justify-between">
                             <p className="text-sm text-muted-foreground">
-                                Menampilkan {attendances.data.length} dari {attendances.meta.total} data
+                                Menampilkan {attendances.data.length} dari {attendances.total} data
                             </p>
                             <div className="flex gap-2">
-                                {attendances.links.prev && (
-                                    <Button variant="outline" size="sm" onClick={() => router.get(attendances.links.prev)}>
+                                {attendances.prev_page_url && (
+                                    <Button variant="outline" size="sm" onClick={() => router.get(attendances.prev_page_url)}>
                                         Sebelumnya
                                     </Button>
                                 )}
-                                {attendances.links.next && (
-                                    <Button variant="outline" size="sm" onClick={() => router.get(attendances.links.next)}>
+                                {attendances.next_page_url && (
+                                    <Button variant="outline" size="sm" onClick={() => router.get(attendances.next_page_url)}>
                                         Selanjutnya
                                     </Button>
                                 )}

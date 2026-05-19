@@ -11,10 +11,10 @@ class SuperadminSeeder extends Seeder
     public function run(): void
     {
         $superadmin = User::firstOrCreate(
-            ['email' => 'superadmin@smartpresence.id'],
+            ['email' => 's@s.s'],
             [
                 'name' => 'Superadmin',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123'),
             ]
         );
 

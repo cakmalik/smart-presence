@@ -11,7 +11,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { schools } from '@/routes';
+import schools from '@/routes/schools';
 import type { BreadcrumbItem } from '@/types';
 import { useState } from 'react';
 
@@ -30,8 +30,12 @@ interface School {
 
 interface PaginatedData {
     data: School[];
-    links: { first: string; last: string; prev: string | null; next: string | null };
-    meta: { current_page: number; last_page: number; per_page: number; total: number };
+    total: number;
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
 }
 
 export default function SchoolsIndex({ schools: schoolsData }: { schools: PaginatedData }) {
@@ -68,7 +72,7 @@ export default function SchoolsIndex({ schools: schoolsData }: { schools: Pagina
                 <Card>
                     <CardHeader>
                         <CardTitle>Daftar Sekolah</CardTitle>
-                        <CardDescription>Total {schoolsData.meta.total} sekolah terdaftar</CardDescription>
+                        <CardDescription>Total {schoolsData.total} sekolah terdaftar</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="mb-4 flex gap-2">
@@ -131,16 +135,16 @@ export default function SchoolsIndex({ schools: schoolsData }: { schools: Pagina
 
                         <div className="mt-4 flex items-center justify-between">
                             <p className="text-sm text-muted-foreground">
-                                Menampilkan {schoolsData.data.length} dari {schoolsData.meta.total} data
+                                Menampilkan {schoolsData.data.length} dari {schoolsData.total} data
                             </p>
                             <div className="flex gap-2">
-                                {schoolsData.links.prev && (
-                                    <Button variant="outline" size="sm" onClick={() => router.get(schoolsData.links.prev)}>
+                                {schoolsData.prev_page_url && (
+                                    <Button variant="outline" size="sm" onClick={() => router.get(schoolsData.prev_page_url)}>
                                         Sebelumnya
                                     </Button>
                                 )}
-                                {schoolsData.links.next && (
-                                    <Button variant="outline" size="sm" onClick={() => router.get(schoolsData.links.next)}>
+                                {schoolsData.next_page_url && (
+                                    <Button variant="outline" size="sm" onClick={() => router.get(schoolsData.next_page_url)}>
                                         Selanjutnya
                                     </Button>
                                 )}

@@ -3,7 +3,7 @@ import { ArrowLeft, Printer, Download } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { students } from '@/routes';
+import students from '@/routes/students';
 import type { BreadcrumbItem } from '@/types';
 
 interface Student {

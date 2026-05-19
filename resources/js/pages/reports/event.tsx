@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { reports } from '@/routes';
+import reports from '@/routes/reports';
 import type { BreadcrumbItem } from '@/types';
 
 interface Event {
@@ -18,8 +18,12 @@ interface Event {
 
 interface PaginatedData {
     data: Event[];
-    links: { first: string; last: string; prev: string | null; next: string | null };
-    meta: { current_page: number; last_page: number; per_page: number; total: number };
+    total: number;
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -52,7 +56,7 @@ export default function ReportsEvent({ events: eventsData }: { events: Paginated
                 <Card>
                     <CardHeader>
                         <CardTitle>Daftar Event</CardTitle>
-                        <CardDescription>Total {eventsData.meta.total} event</CardDescription>
+                        <CardDescription>Total {eventsData.total} event</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -92,16 +96,16 @@ export default function ReportsEvent({ events: eventsData }: { events: Paginated
 
                         <div className="mt-4 flex items-center justify-between">
                             <p className="text-sm text-muted-foreground">
-                                Menampilkan {eventsData.data.length} dari {eventsData.meta.total} data
+                                Menampilkan {eventsData.data.length} dari {eventsData.total} data
                             </p>
                             <div className="flex gap-2">
-                                {eventsData.links.prev && (
-                                    <Button variant="outline" size="sm" onClick={() => router.get(eventsData.links.prev)}>
+                                {eventsData.prev_page_url && (
+                                    <Button variant="outline" size="sm" onClick={() => router.get(eventsData.prev_page_url)}>
                                         Sebelumnya
                                     </Button>
                                 )}
-                                {eventsData.links.next && (
-                                    <Button variant="outline" size="sm" onClick={() => router.get(eventsData.links.next)}>
+                                {eventsData.next_page_url && (
+                                    <Button variant="outline" size="sm" onClick={() => router.get(eventsData.next_page_url)}>
                                         Selanjutnya
                                     </Button>
                                 )}

@@ -2,7 +2,13 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { School, Users, GraduationCap, CalendarDays, ScanLine, FileText } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { dashboard, schools, classrooms, students, events, attendance, reports } from '@/routes';
+import { dashboard } from '@/routes';
+import schools from '@/routes/schools';
+import classrooms from '@/routes/classrooms';
+import students from '@/routes/students';
+import events from '@/routes/events';
+import attendance from '@/routes/attendance';
+import reports from '@/routes/reports';
 import type { BreadcrumbItem } from '@/types';
 
 interface DashboardProps {
