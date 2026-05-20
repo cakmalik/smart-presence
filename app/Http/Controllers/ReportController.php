@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PrayerExport;
 use App\Models\Attendance;
 use App\Models\Classroom;
 use App\Models\Event;
@@ -10,6 +11,7 @@ use App\Services\PrayerService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
@@ -103,94 +105,22 @@ class ReportController extends Controller
         ]);
     }
 
-    public function exportPrayer(Request $request, PrayerService $prayerService): StreamedResponse
+    public function exportPrayer(Request $request, PrayerService $prayerService): BinaryFileResponse
     {
-        $schoolId = auth()->user()->school_id;
-        $prayerTypes = $prayerService->getAllPrayerTypes();
-        $filter = $request->filter ?? 'present';
+        $dateFrom = $request->date_from ?: now()->startOfMonth()->format('Y-m-d');
+        $dateTo = $request->date_to ?: now()->format('Y-m-d');
 
-        if ($filter === 'absent') {
-            $students = Student::query()
-                ->with('classroom:id,name')
-                ->where('status', 'active')
-                ->when($request->classroom_id, fn ($q) => $q->where('classroom_id', $request->classroom_id))
-                ->whereDoesntHave('attendances', function ($q) use ($request, $prayerTypes) {
-                    $q->whereIn('attendance_type', $prayerTypes);
-                    if ($request->date_from) {
-                        $q->where('attendance_date', '>=', $request->date_from);
-                    }
-                    if ($request->date_to) {
-                        $q->where('attendance_date', '<=', $request->date_to);
-                    }
-                    if ($request->prayer_type) {
-                        $q->where('attendance_type', $request->prayer_type);
-                    }
-                })
-                ->orderBy('name')
-                ->get();
+        $export = new PrayerExport(
+            schoolId: auth()->user()->school_id,
+            dateFrom: $dateFrom,
+            dateTo: $dateTo,
+            prayerType: $request->prayer_type,
+            prayerTypes: $prayerService->getAllPrayerTypes(),
+        );
 
-            $filename = 'rekap_tidak_sholat_'.now()->format('Y-m-d').'.csv';
+        $filename = 'rekap_presensi_sholat_'.now()->format('Y-m-d').'.xlsx';
 
-            $headers = [
-                'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-            ];
-
-            $callback = function () use ($students) {
-                $file = fopen('php://output', 'w');
-                fputcsv($file, ['NIS', 'Nama Siswa', 'Kelas']);
-
-                foreach ($students as $student) {
-                    fputcsv($file, [
-                        $student->nis ?? '-',
-                        $student->name,
-                        $student->classroom?->name ?? '-',
-                    ]);
-                }
-
-                fclose($file);
-            };
-
-            return response()->stream($callback, 200, $headers);
-        }
-
-        $attendances = Attendance::query()
-            ->whereIn('attendance_type', $prayerTypes)
-            ->with(['student:id,name,nis,classroom_id', 'student.classroom:id,name', 'operator:id,name'])
-            ->when($request->date_from, fn ($q) => $q->where('attendance_date', '>=', $request->date_from))
-            ->when($request->date_to, fn ($q) => $q->where('attendance_date', '<=', $request->date_to))
-            ->when($request->classroom_id, fn ($q) => $q->whereHas('student', fn ($q2) => $q2->where('classroom_id', $request->classroom_id)))
-            ->when($request->prayer_type, fn ($q, $type) => $q->where('attendance_type', $type))
-            ->latest('attendance_date')
-            ->get();
-
-        $filename = 'rekap_presensi_sholat_'.now()->format('Y-m-d').'.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-        ];
-
-        $callback = function () use ($attendances, $prayerService, $schoolId) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['Tanggal', 'Waktu', 'Jenis Sholat', 'NIS', 'Nama Siswa', 'Kelas', 'Operator']);
-
-            foreach ($attendances as $attendance) {
-                fputcsv($file, [
-                    $attendance->attendance_date->format('d M Y'),
-                    $attendance->attended_at->format('H:i'),
-                    $prayerService->getPrayerLabel($attendance->attendance_type, $schoolId),
-                    $attendance->student->nis ?? '-',
-                    $attendance->student->name,
-                    $attendance->student->classroom?->name ?? '-',
-                    $attendance->operator->name,
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return $export->download($filename);
     }
 
     public function exportEvent(Request $request, Event $event): StreamedResponse

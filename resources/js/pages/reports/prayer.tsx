@@ -87,7 +87,7 @@ export default function ReportsPrayer({
                         <p className="text-muted-foreground">Rekap presensi sholat berjamaah</p>
                     </div>
                     <Button onClick={handleExport}>
-                        <Download className="mr-2 h-4 w-4" /> Export CSV
+                        <Download className="mr-2 h-4 w-4" /> Export Excel
                     </Button>
                 </div>
 
