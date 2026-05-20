@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\School;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -35,12 +36,20 @@ class EventController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('events/create');
+        $schools = auth()->user()->isSuperadmin()
+            ? School::query()->where('status', 'active')->get(['id', 'name'])
+            : collect();
+
+        return Inertia::render('events/create', [
+            'schools' => $schools,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $user = auth()->user();
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
@@ -49,7 +58,17 @@ class EventController extends Controller
             'end_time' => ['nullable', 'date_format:H:i'],
             'location' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:draft,active,completed,cancelled'],
-        ]);
+        ];
+
+        if ($user->isSuperadmin()) {
+            $rules['school_id'] = ['required', 'exists:schools,id'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if (! $user->isSuperadmin()) {
+            $validated['school_id'] = $user->school_id;
+        }
 
         Event::create($validated);
 
@@ -58,6 +77,10 @@ class EventController extends Controller
 
     public function edit(Event $event): Response
     {
+        $schools = auth()->user()->isSuperadmin()
+            ? School::query()->where('status', 'active')->get(['id', 'name'])
+            : collect();
+
         return Inertia::render('events/edit', [
             'event' => [
                 'id' => $event->id,
@@ -69,7 +92,9 @@ class EventController extends Controller
                 'end_time' => $event->end_time,
                 'location' => $event->location,
                 'status' => $event->status,
+                'school_id' => $event->school_id,
             ],
+            'schools' => $schools,
         ]);
     }
 

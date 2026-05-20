@@ -1,6 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +12,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import events from '@/routes/events';
-import type { BreadcrumbItem } from '@/types';
+
+interface School {
+    id: number;
+    name: string;
+}
 
 interface Event {
     id: number;
@@ -25,9 +28,10 @@ interface Event {
     end_time: string | null;
     location: string | null;
     status: 'draft' | 'active' | 'completed' | 'cancelled';
+    school_id: number | null;
 }
 
-export default function EventsEdit({ event }: { event: Event }) {
+export default function EventsEdit({ event, schools }: { event: Event; schools: School[] }) {
     const { data, setData, put, processing, errors } = useForm({
         name: event.name,
         description: event.description || '',
@@ -37,18 +41,13 @@ export default function EventsEdit({ event }: { event: Event }) {
         end_time: event.end_time || '',
         location: event.location || '',
         status: event.status,
+        school_id: event.school_id ? String(event.school_id) : '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         put(events.update.url(event.id));
     };
-
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Event', href: events.index() },
-        { title: event.name, href: events.edit.url(event.id) },
-    ];
 
     return (
         <>
@@ -118,6 +117,24 @@ export default function EventsEdit({ event }: { event: Event }) {
                                     </SelectContent>
                                 </Select>
                             </div>
+                            {schools && schools.length > 0 && (
+                                <div>
+                                    <Label htmlFor="school_id">Sekolah</Label>
+                                    <Select value={data.school_id} onValueChange={(value) => setData('school_id', value)}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Pilih sekolah" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {schools.map((s) => (
+                                                <SelectItem key={s.id} value={String(s.id)}>
+                                                    {s.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.school_id && <p className="mt-1 text-sm text-red-500">{errors.school_id}</p>}
+                                </div>
+                            )}
                             <div className="flex justify-end gap-2">
                                 <Button variant="outline" asChild>
                                     <Link href={events.index()}>Batal</Link>
@@ -134,17 +151,14 @@ export default function EventsEdit({ event }: { event: Event }) {
     );
 }
 
-EventsEdit.layout = (page: any) => {
-    const { event } = page.props;
-    return (
-        <AppLayout
-            breadcrumbs={[
-                { title: 'Dashboard', href: '/dashboard' },
-                { title: 'Event', href: events.index() },
-                { title: event.name, href: events.edit.url(event.id) },
-            ]}
-        >
-            {page}
-        </AppLayout>
-    );
+EventsEdit.layout = (props: any) => {
+    const { event } = props;
+
+    return {
+        breadcrumbs: [
+            { title: 'Dashboard', href: '/dashboard' },
+            { title: 'Event', href: events.index() },
+            { title: event.name, href: events.edit.url(event.id) },
+        ],
+    };
 };

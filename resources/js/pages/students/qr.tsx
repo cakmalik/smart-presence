@@ -71,17 +71,14 @@ export default function StudentQr({ student, qr_code, qr_image }: { student: Stu
     );
 }
 
-StudentQr.layout = (page: any) => {
-    const { student } = page.props;
-    return (
-        <AppLayout
-            breadcrumbs={[
-                { title: 'Dashboard', href: '/dashboard' },
-                { title: 'Siswa', href: students.index() },
-                { title: student.name, href: students.qr.url(student.id) },
-            ]}
-        >
-            {page}
-        </AppLayout>
-    );
+StudentQr.layout = (props: any) => {
+    const { student } = props;
+
+    return {
+        breadcrumbs: [
+            { title: 'Dashboard', href: '/dashboard' },
+            { title: 'Siswa', href: students.index() },
+            { title: student.name, href: students.qr.url(student.id) },
+        ],
+    };
 };

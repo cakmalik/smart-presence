@@ -143,17 +143,14 @@ export default function ClassroomsEdit({ classroom, teachers, schools }: { class
     );
 }
 
-ClassroomsEdit.layout = (page: any) => {
-    const { classroom } = page.props;
-    return (
-        <AppLayout
-            breadcrumbs={[
-                { title: 'Dashboard', href: '/dashboard' },
-                { title: 'Kelas', href: classrooms.index() },
-                { title: classroom.name, href: classrooms.edit.url(classroom.id) },
-            ]}
-        >
-            {page}
-        </AppLayout>
-    );
+ClassroomsEdit.layout = (props: any) => {
+    const { classroom } = props;
+
+    return {
+        breadcrumbs: [
+            { title: 'Dashboard', href: '/dashboard' },
+            { title: 'Kelas', href: classrooms.index() },
+            { title: classroom.name, href: classrooms.edit.url(classroom.id) },
+        ],
+    };
 };

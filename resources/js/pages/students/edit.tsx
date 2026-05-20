@@ -132,17 +132,14 @@ export default function StudentsEdit({ student, classrooms }: { student: Student
     );
 }
 
-StudentsEdit.layout = (page: any) => {
-    const { student } = page.props;
-    return (
-        <AppLayout
-            breadcrumbs={[
-                { title: 'Dashboard', href: '/dashboard' },
-                { title: 'Siswa', href: students.index() },
-                { title: student.name, href: students.edit.url(student.id) },
-            ]}
-        >
-            {page}
-        </AppLayout>
-    );
+StudentsEdit.layout = (props: any) => {
+    const { student } = props;
+
+    return {
+        breadcrumbs: [
+            { title: 'Dashboard', href: '/dashboard' },
+            { title: 'Siswa', href: students.index() },
+            { title: student.name, href: students.edit.url(student.id) },
+        ],
+    };
 };

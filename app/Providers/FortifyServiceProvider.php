@@ -81,6 +81,12 @@ class FortifyServiceProvider extends ServiceProvider
 
     private function configureAuthentication(): void
     {
+        $this->configureLogin();
+        $this->configurePasswordConfirmation();
+    }
+
+    private function configureLogin(): void
+    {
         Fortify::authenticateUsing(function (Request $request) {
             $user = User::where('username', $request->login)
                 ->orWhere('email', $request->login)
@@ -89,6 +95,13 @@ class FortifyServiceProvider extends ServiceProvider
             if ($user && Hash::check($request->password, $user->password)) {
                 return $user;
             }
+        });
+    }
+
+    private function configurePasswordConfirmation(): void
+    {
+        Fortify::confirmPasswordsUsing(function ($user, ?string $password) {
+            return Hash::check($password, $user->password);
         });
     }
 

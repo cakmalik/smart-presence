@@ -1,10 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Select,
     SelectContent,
@@ -13,9 +12,13 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import events from '@/routes/events';
-import type { BreadcrumbItem } from '@/types';
 
-export default function EventsCreate() {
+interface School {
+    id: number;
+    name: string;
+}
+
+export default function EventsCreate({ schools }: { schools: School[] }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
@@ -25,18 +28,13 @@ export default function EventsCreate() {
         end_time: '',
         location: '',
         status: 'draft',
+        school_id: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post(events.store());
     };
-
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Event', href: events.index() },
-        { title: 'Tambah', href: events.create() },
-    ];
 
     return (
         <>
@@ -107,6 +105,24 @@ export default function EventsCreate() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                            {schools && schools.length > 0 && (
+                                <div>
+                                    <Label htmlFor="school_id">Sekolah</Label>
+                                    <Select value={data.school_id} onValueChange={(value) => setData('school_id', value)}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Pilih sekolah" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {schools.map((s) => (
+                                                <SelectItem key={s.id} value={String(s.id)}>
+                                                    {s.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.school_id && <p className="mt-1 text-sm text-red-500">{errors.school_id}</p>}
+                                </div>
+                            )}
                             <div className="flex justify-end gap-2">
                                 <Button variant="outline" asChild>
                                     <Link href={events.index()}>Batal</Link>

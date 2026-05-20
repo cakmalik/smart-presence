@@ -31,16 +31,21 @@ class PrayerService
         return $result;
     }
 
-    public function determinePrayerType(?int $hour = null, ?int $schoolId = null): string
+    public function determinePrayerType(?string $time = null, ?int $schoolId = null): string
     {
-        $hour ??= now()->hour;
+        $time ??= now()->format('H:i');
+        [$hour, $minute] = explode(':', $time);
+        $currentMinutes = ((int) $hour * 60) + (int) $minute;
+
         $times = $this->getPrayerTimes($schoolId);
 
-        foreach ($times as $type => $time) {
-            $start = (int) explode(':', $time['start_time'])[0];
-            $end = (int) explode(':', $time['end_time'])[0];
+        foreach ($times as $type => $timeslot) {
+            $startParts = explode(':', $timeslot['start_time']);
+            $endParts = explode(':', $timeslot['end_time']);
+            $startMinutes = ((int) $startParts[0] * 60) + (int) ($startParts[1] ?? 0);
+            $endMinutes = ((int) $endParts[0] * 60) + (int) ($endParts[1] ?? 0);
 
-            if ($hour >= $start && $hour < $end) {
+            if ($currentMinutes >= $startMinutes && $currentMinutes < $endMinutes) {
                 return $type;
             }
         }
