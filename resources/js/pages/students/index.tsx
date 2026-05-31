@@ -188,8 +188,8 @@ export default function StudentsIndex({
                         <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleImport} />
                         <Button asChild>
                             <Link href={students.create()}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Tambah Siswa
+                                <Plus className="h-4 w-4" />
+                                <span className="hidden md:inline-block ml-2">Tambah Siswa</span>
                             </Link>
                         </Button>
                     </div>

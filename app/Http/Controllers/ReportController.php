@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Student;
 use App\Services\PrayerService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -20,7 +21,7 @@ class ReportController extends Controller
     {
         $schoolId = auth()->user()->school_id;
         $prayerTypes = $prayerService->getAllPrayerTypes();
-        $filter = $request->filter ?? 'present';
+        $filter = $request->filter ?? 'all';
 
         if ($filter === 'absent') {
             $absentQuery = Student::query()
@@ -53,8 +54,9 @@ class ReportController extends Controller
                         : 'Semua tanggal',
                     'attended_at' => '-',
                     'operator_name' => '-',
+                    'status' => 'Tidak Hadir',
                 ]);
-        } else {
+        } elseif ($filter === 'present') {
             $data = Attendance::query()
                 ->whereIn('attendance_type', $prayerTypes)
                 ->with(['student:id,name,classroom_id', 'student.classroom:id,name', 'operator:id,name'])
@@ -72,7 +74,68 @@ class ReportController extends Controller
                     'operator_name' => $attendance->operator->name,
                     'attendance_date' => $attendance->attendance_date->format('d M Y'),
                     'attended_at' => $attendance->attended_at->format('H:i'),
+                    'status' => 'Hadir',
                 ]);
+        } else {
+            $present = Attendance::query()
+                ->whereIn('attendance_type', $prayerTypes)
+                ->with(['student:id,name,classroom_id', 'student.classroom:id,name', 'operator:id,name'])
+                ->when($request->date_from, fn ($q) => $q->where('attendance_date', '>=', $request->date_from))
+                ->when($request->date_to, fn ($q) => $q->where('attendance_date', '<=', $request->date_to))
+                ->when($request->classroom_id, fn ($q) => $q->whereHas('student', fn ($q2) => $q2->where('classroom_id', $request->classroom_id)))
+                ->when($request->prayer_type, fn ($q, $type) => $q->where('attendance_type', $type))
+                ->get()
+                ->map(fn (Attendance $attendance) => [
+                    'student_name' => $attendance->student->name,
+                    'classroom_name' => $attendance->student->classroom?->name,
+                    'nis' => $attendance->student->nis,
+                    'prayer_type' => $prayerService->getPrayerLabel($attendance->attendance_type, $schoolId),
+                    'operator_name' => $attendance->operator->name,
+                    'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
+                    'attended_at' => $attendance->attended_at->format('H:i'),
+                    'status' => 'Hadir',
+                ]);
+
+            $absent = Student::query()
+                ->with('classroom:id,name')
+                ->where('status', 'active')
+                ->when($request->classroom_id, fn ($q) => $q->where('classroom_id', $request->classroom_id))
+                ->whereDoesntHave('attendances', function ($q) use ($request, $prayerTypes) {
+                    $q->whereIn('attendance_type', $prayerTypes);
+                    if ($request->date_from) {
+                        $q->where('attendance_date', '>=', $request->date_from);
+                    }
+                    if ($request->date_to) {
+                        $q->where('attendance_date', '<=', $request->date_to);
+                    }
+                    if ($request->prayer_type) {
+                        $q->where('attendance_type', $request->prayer_type);
+                    }
+                })
+                ->get()
+                ->map(fn (Student $student) => [
+                    'student_name' => $student->name,
+                    'classroom_name' => $student->classroom?->name,
+                    'nis' => $student->nis,
+                    'prayer_type' => $request->prayer_type
+                        ? $prayerService->getPrayerLabel($request->prayer_type, $schoolId)
+                        : 'Semua',
+                    'operator_name' => '-',
+                    'attendance_date' => $request->date_from ?: now()->startOfMonth()->format('Y-m-d'),
+                    'attended_at' => '-',
+                    'status' => 'Tidak Hadir',
+                ]);
+
+            $merged = $present->concat($absent)->sortByDesc('attendance_date')->values();
+
+            $perPage = 20;
+            $currentPage = LengthAwarePaginator::resolveCurrentPage();
+            $total = $merged->count();
+            $results = $merged->forPage($currentPage, $perPage);
+
+            $data = new LengthAwarePaginator($results, $total, $perPage, $currentPage, [
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+            ]);
         }
 
         $classrooms = Classroom::query()->orderBy('name')->get(['id', 'name']);
@@ -116,6 +179,7 @@ class ReportController extends Controller
             dateTo: $dateTo,
             prayerType: $request->prayer_type,
             prayerTypes: $prayerService->getAllPrayerTypes(),
+            filter: $request->filter ?? 'all',
         );
 
         $filename = 'rekap_presensi_sholat_'.now()->format('Y-m-d').'.xlsx';

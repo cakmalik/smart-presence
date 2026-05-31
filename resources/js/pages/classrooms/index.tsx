@@ -49,15 +49,15 @@ export default function ClassroomsIndex({ classrooms: classroomsData, isSuperadm
         <>
             <Head title="Manajemen Kelas" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold">Manajemen Kelas</h1>
                         <p className="text-muted-foreground">Kelola data kelas</p>
                     </div>
                     <Button asChild>
                         <Link href={classrooms.create()}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Tambah Kelas
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden md:inline-block ml-2">Tambah</span>
                         </Link>
                     </Button>
                 </div>

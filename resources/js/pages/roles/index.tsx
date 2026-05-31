@@ -39,8 +39,8 @@ export default function RolesIndex({ roles: rolesData }: { roles: Role[] }) {
                     </div>
                     <Button asChild>
                         <Link href={roles.create()}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Tambah Role
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden md:inline-block ml-2">Tambah Role</span>
                         </Link>
                     </Button>
                 </div>

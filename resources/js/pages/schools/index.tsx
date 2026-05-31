@@ -63,8 +63,8 @@ export default function SchoolsIndex({ schools: schoolsData }: { schools: Pagina
                     </div>
                     <Button asChild>
                         <Link href={schools.create()}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Tambah Sekolah
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden md:inline-block ml-2">Tambah Sekolah</span>
                         </Link>
                     </Button>
                 </div>

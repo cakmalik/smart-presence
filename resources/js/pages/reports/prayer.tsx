@@ -28,6 +28,7 @@ interface Attendance {
     operator_name: string;
     attendance_date: string;
     attended_at: string;
+    status?: string;
 }
 
 interface PaginatedData {
@@ -51,7 +52,7 @@ export default function ReportsPrayer({
     filters: { date_from?: string; date_to?: string; classroom_id?: string; prayer_type?: string; filter?: string };
     prayer_types: Record<string, string>;
 }) {
-    const currentFilter = filters.filter || 'present';
+    const currentFilter = filters.filter || 'all';
 
     const handleFilter = (key: string, value: string) => {
         router.get(
@@ -67,7 +68,7 @@ export default function ReportsPrayer({
         if (filters.date_to) params.set('date_to', filters.date_to);
         if (filters.classroom_id) params.set('classroom_id', filters.classroom_id);
         if (filters.prayer_type) params.set('prayer_type', filters.prayer_type);
-        if (filters.filter) params.set('filter', filters.filter);
+        params.set('filter', currentFilter);
         window.location.href = `${reports.export.prayer.url()}?${params.toString()}`;
     };
 
@@ -163,6 +164,7 @@ export default function ReportsPrayer({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="all">Semua</SelectItem>
                                         <SelectItem value="present">Hadir</SelectItem>
                                         <SelectItem value="absent">Tidak Hadir</SelectItem>
                                     </SelectContent>
@@ -179,53 +181,65 @@ export default function ReportsPrayer({
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="px-4 py-2 text-left font-medium">Tanggal</th>
-                                        {currentFilter === 'present' && (
-                                            <th className="px-4 py-2 text-left font-medium">Waktu</th>
-                                        )}
-                                        <th className="px-4 py-2 text-left font-medium">Jenis Sholat</th>
-                                        {currentFilter === 'absent' && (
-                                            <th className="px-4 py-2 text-left font-medium">NIS</th>
-                                        )}
-                                        <th className="px-4 py-2 text-left font-medium">Nama Siswa</th>
-                                        <th className="px-4 py-2 text-left font-medium">Kelas</th>
-                                        {currentFilter === 'present' && (
-                                            <th className="px-4 py-2 text-left font-medium">Operator</th>
-                                        )}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {attendances.data.length === 0 && (
-                                        <tr>
-                                            <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                                                Tidak ada data
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {attendances.data.map((att, i) => (
-                                        <tr key={i} className="border-b">
-                                            <td className="px-4 py-2">{att.attendance_date}</td>
-                                            {currentFilter === 'present' && (
-                                                <td className="px-4 py-2">{att.attended_at}</td>
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b">
+                                                <th className="px-4 py-2 text-left font-medium">Tanggal</th>
+                                                {(currentFilter === 'present' || currentFilter === 'all') && (
+                                                    <th className="px-4 py-2 text-left font-medium">Waktu</th>
+                                                )}
+                                                <th className="px-4 py-2 text-left font-medium">Jenis Sholat</th>
+                                                <th className="px-4 py-2 text-left font-medium">NIS</th>
+                                                <th className="px-4 py-2 text-left font-medium">Nama Siswa</th>
+                                                <th className="px-4 py-2 text-left font-medium">Kelas</th>
+                                                {currentFilter === 'all' && (
+                                                    <th className="px-4 py-2 text-left font-medium">Status</th>
+                                                )}
+                                                {(currentFilter === 'present' || currentFilter === 'all') && (
+                                                    <th className="px-4 py-2 text-left font-medium">Operator</th>
+                                                )}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {attendances.data.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                                                        Tidak ada data
+                                                    </td>
+                                                </tr>
                                             )}
-                                            <td className="px-4 py-2">
-                                                <span className="font-medium">{att.prayer_type}</span>
-                                            </td>
-                                            {currentFilter === 'absent' && (
-                                                <td className="px-4 py-2">{att.nis || '-'}</td>
-                                            )}
-                                            <td className="px-4 py-2 font-medium">{att.student_name}</td>
-                                            <td className="px-4 py-2">{att.classroom_name || '-'}</td>
-                                            {currentFilter === 'present' && (
-                                                <td className="px-4 py-2">{att.operator_name}</td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            {attendances.data.map((att, i) => (
+                                                <tr key={i} className="border-b">
+                                                    <td className="px-4 py-2">{att.attendance_date}</td>
+                                                    {(currentFilter === 'present' || currentFilter === 'all') && (
+                                                        <td className="px-4 py-2">{att.attended_at}</td>
+                                                    )}
+                                                    <td className="px-4 py-2">
+                                                        <span className="font-medium">{att.prayer_type}</span>
+                                                    </td>
+                                                    <td className="px-4 py-2">{att.nis || '-'}</td>
+                                                    <td className="px-4 py-2 font-medium">{att.student_name}</td>
+                                                    <td className="px-4 py-2">{att.classroom_name || '-'}</td>
+                                                    {currentFilter === 'all' && (
+                                                        <td className="px-4 py-2">
+                                                            <span
+                                                                className={
+                                                                    att.status === 'Hadir'
+                                                                        ? 'text-green-600 font-medium'
+                                                                        : 'text-red-600 font-medium'
+                                                                }
+                                                            >
+                                                                {att.status}
+                                                            </span>
+                                                        </td>
+                                                    )}
+                                                    {(currentFilter === 'present' || currentFilter === 'all') && (
+                                                        <td className="px-4 py-2">{att.operator_name}</td>
+                                                    )}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                         </div>
 
                         <div className="mt-4 flex items-center justify-between">

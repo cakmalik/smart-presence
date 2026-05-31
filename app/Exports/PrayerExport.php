@@ -19,6 +19,7 @@ class PrayerExport implements WithMultipleSheets
         private string $dateTo,
         private ?string $prayerType,
         private array $prayerTypes,
+        private string $filter = 'all',
     ) {}
 
     public function sheets(): array
@@ -47,6 +48,18 @@ class PrayerExport implements WithMultipleSheets
                 ->where('attendance_date', '<=', $this->dateTo)
                 ->when($this->prayerType, fn ($q) => $q->where('attendance_type', $this->prayerType))
                 ->get(['student_id', 'attendance_date']);
+
+            $attendedIds = $attendances->pluck('student_id')->unique()->toArray();
+
+            if ($this->filter === 'present') {
+                $students = $students->whereIn('id', $attendedIds)->values();
+            } elseif ($this->filter === 'absent') {
+                $students = $students->whereNotIn('id', $attendedIds)->values();
+            }
+
+            if ($students->isEmpty()) {
+                continue;
+            }
 
             $attendedMap = [];
             foreach ($attendances as $att) {

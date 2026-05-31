@@ -67,7 +67,8 @@ export default function EventsIndex({ events: eventsData }: { events: PaginatedD
                     </div>
                     <Button asChild>
                         <Link href={events.create()}>
-                            <Plus className="mr-2 h-4 w-4" /> Tambah Event
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden md:inline-block ml-2">Tambah Event</span>
                         </Link>
                     </Button>
                 </div>

@@ -72,8 +72,8 @@ export default function UsersIndex({
                     </div>
                     <Button asChild>
                         <Link href={users.create()}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Tambah Pengguna
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden md:inline-block ml-2">Tambah Pengguna</span>
                         </Link>
                     </Button>
                 </div>
