@@ -475,5 +475,5 @@ Karena:
 * maintainable
 * scalable
 * hemat biaya
-* cocok untuk solo developer
+* cocok untuk solo develope
 
