@@ -1,4 +1,4 @@
-name: tests
+name: test ci cd
 
 on:
   push:
