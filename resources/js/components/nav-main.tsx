@@ -5,6 +5,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
@@ -17,6 +18,7 @@ export function NavMain({
     items: NavItem[];
 }) {
     const { isCurrentUrl } = useCurrentUrl();
+    const { setOpenMobile } = useSidebar();
 
     if (items.length === 0) {
         return null;
@@ -33,7 +35,7 @@ export function NavMain({
                             isActive={isCurrentUrl(item.href)}
                             tooltip={{ children: item.title }}
                         >
-                            <Link href={item.href} prefetch>
+                            <Link href={item.href} prefetch onClick={() => setOpenMobile(false)}>
                                 {item.icon && <item.icon />}
                                 <span>{item.title}</span>
                             </Link>

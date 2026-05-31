@@ -2,6 +2,9 @@ import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import type { AppVariant } from '@/types';
+import { useSidebar } from '@/components/ui/sidebar';
+import { router } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 type Props = {
     children: ReactNode;
@@ -17,5 +20,25 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
         );
     }
 
-    return <SidebarProvider defaultOpen={isOpen}>{children}</SidebarProvider>;
+    return (
+        <SidebarProvider defaultOpen={isOpen}>
+            <SidebarNavigationListener />
+            {children}
+        </SidebarProvider>
+    );
+}
+
+function SidebarNavigationListener() {
+    const { setOpenMobile } = useSidebar();
+
+    useEffect(() => {
+        return router.on('navigate', () => {
+            setOpenMobile(false);
+            setTimeout(() => {
+                document.body.style.removeProperty('pointer-events');
+            }, 10);
+        });
+    }, [setOpenMobile]);
+
+    return null;
 }
