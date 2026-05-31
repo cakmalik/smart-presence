@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['can:manage students'])->group(function () {
         Route::resource('students', StudentController::class)->except(['show']);
         Route::post('students/import', [StudentController::class, 'import'])->name('students.import');
+        Route::get('students/import/sample', [StudentController::class, 'importSample'])->name('students.import.sample');
         Route::get('students/{student}/qr', [StudentController::class, 'qr'])->name('students.qr');
         Route::get('students/{student}/qr-data', [StudentController::class, 'qrData'])->name('students.qr.data');
     });

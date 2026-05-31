@@ -8,9 +8,12 @@ use App\Services\QrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\SimpleExcel\SimpleExcelReader;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudentController extends Controller
 {
@@ -157,34 +160,76 @@ class StudentController extends Controller
             'file' => ['required', 'file', 'mimes:csv,txt'],
         ]);
 
-        $file = $request->file('file');
-        $handle = fopen($file->getRealPath(), 'r');
+        $schoolId = auth()->user()->school_id;
 
-        $header = fgetcsv($handle);
+        $classrooms = Classroom::query()
+            ->where('school_id', $schoolId)
+            ->pluck('id', 'name');
 
-        $classrooms = Classroom::query()->pluck('id', 'name');
+        $reader = SimpleExcelReader::create($request->file('file'), 'csv');
 
-        while ($row = fgetcsv($handle)) {
-            $data = array_combine($header, $row);
+        $imported = 0;
+        $skipped = 0;
 
-            $classroomId = $classrooms[$data['classroom']] ?? null;
+        DB::transaction(function () use ($reader, $classrooms, $schoolId, &$imported, &$skipped) {
+            $reader->getRows()->each(function (array $row) use ($classrooms, $schoolId, &$imported, &$skipped) {
+                $name = trim($row['name'] ?? '');
 
-            if (! $classroomId) {
-                continue;
-            }
+                if ($name === '') {
+                    $skipped++;
 
-            Student::create([
-                'nis' => $data['nis'] ?? null,
-                'nisn' => $data['nisn'] ?? null,
-                'name' => $data['name'],
-                'classroom_id' => $classroomId,
-                'qr_code' => Str::uuid()->toString(),
-                'status' => 'active',
-            ]);
+                    return;
+                }
+
+                $classroomName = trim($row['classroom'] ?? '');
+                $classroomId = $classrooms[$classroomName] ?? null;
+
+                if (! $classroomId) {
+                    $skipped++;
+
+                    return;
+                }
+
+                Student::create([
+                    'school_id' => $schoolId,
+                    'classroom_id' => $classroomId,
+                    'nis' => ! empty($row['nis']) ? trim($row['nis']) : null,
+                    'nisn' => ! empty($row['nisn']) ? trim($row['nisn']) : null,
+                    'name' => $name,
+                    'qr_code' => Str::uuid()->toString(),
+                    'status' => 'active',
+                ]);
+
+                $imported++;
+            });
+        });
+
+        $message = "{$imported} siswa berhasil diimport.";
+
+        if ($skipped > 0) {
+            $message .= " {$skipped} siswa dilewati (kelas tidak ditemukan atau data tidak lengkap).";
         }
 
-        fclose($handle);
+        return redirect()->route('students.index')->with('success', $message);
+    }
 
-        return redirect()->route('students.index')->with('success', 'Data siswa berhasil diimport.');
+    public function importSample(): StreamedResponse
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="contoh_format_import_siswa.csv"',
+        ];
+
+        $callback = function () {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['name', 'nis', 'nisn', 'classroom']);
+            fputcsv($file, ['Ahmad Fauzi', '123456', '0012345678', 'Kelas 7A']);
+            fputcsv($file, ['Siti Nurhaliza', '123457', '0012345679', 'Kelas 7A']);
+            fputcsv($file, ['Budi Santoso', '123458', '0012345680', 'Kelas 7B']);
+            fputcsv($file, ['Dewi Lestari', '123459', '0012345681', 'Kelas 8A']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

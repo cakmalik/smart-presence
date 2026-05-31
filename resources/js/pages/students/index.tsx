@@ -1,5 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Plus, Pencil, Trash2, Search, QrCode, Upload, Download, Printer, Loader2, X } from 'lucide-react';
+import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -160,7 +161,12 @@ export default function StudentsIndex({
             postImport(students.import(), {
                 forceFormData: true,
                 onSuccess: () => {
+                    toast.success('Data siswa berhasil diimport.');
                     if (fileInputRef.current) fileInputRef.current.value = '';
+                },
+                onError: (errors) => {
+                    const message = errors?.file || 'Terjadi kesalahan saat import.';
+                    toast.error(message);
                 },
             });
         }
@@ -181,6 +187,12 @@ export default function StudentsIndex({
                         <p className="text-muted-foreground">Kelola data siswa</p>
                     </div>
                     <div className="flex gap-2">
+                        <Button variant="outline" asChild>
+                            <a href={students.import.sample.url()}>
+                                <Download className="h-4 w-4" />
+                                <span className="hidden md:inline-block ml-2">Format CSV</span>
+                            </a>
+                        </Button>
                         <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importProcessing}>
                             <Upload className="mr-2 h-4 w-4" />
                             Import
